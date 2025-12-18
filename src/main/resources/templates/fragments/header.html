@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="https://www.thymeleaf.org/extras/spring-security">
+<head th:fragment="head">
+    <meta charset="utf-8">
+    <title>게시판</title>
+    <!-- Bootstrap 5.2.3 Version -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+
+    <!-- My CSS -->
+    <link rel="stylesheet" href="/css/custom.css">
+
+    <!-- JQuery -->
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+</head>
+
+<body>
+
+<div th:fragment="header (pageName)">
+    <!-- Bootstrap 5.2.3 Version -->
+    <!-- 로그인 / 블랙리스트 alert -->
+    <script th:if="${param.loginSuccess}">
+        alert("반갑습니다!");
+    </script>
+
+    <script th:if="${param.blacklist}">
+        alert("블랙리스트 계정입니다. 글·댓글·좋아요 기능이 제한됩니다.");
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
+
+    <nav class="navbar navbar-expand-lg" style="background-color: limegreen; margin-bottom: 60px;">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">Basic Board</a>
+            <div class="collapse navbar-collapse" id="navbarNavDropdown">
+                <!--<ul class="navbar-nav">-->
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a th:if="${pageName == 'home'}" class="nav-link active" aria-current="page" href="/">Home</a>
+                        <a th:unless="${pageName == 'home'}" class="nav-link" aria-current="page" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a th:if="${pageName == 'greeting'}" class="nav-link active" aria-current="page" href="/boards/greeting">가입인사</a>
+                        <a th:unless="${pageName == 'greeting'}" class="nav-link" aria-current="page" href="/boards/greeting">가입인사</a>
+                    </li>
+                    <li class="nav-item">
+                        <a th:if="${pageName == 'free'}" class="nav-link active" aria-current="page" href="/boards/free">자유게시판</a>
+                        <a th:unless="${pageName == 'free'}" class="nav-link" aria-current="page" href="/boards/free">자유게시판</a>
+                    </li>
+                    <li class="nav-item">
+                        <a th:if="${pageName == 'gold'}" class="nav-link active" aria-current="page" href="/boards/gold">골드게시판</a>
+                        <a th:unless="${pageName == 'gold'}" class="nav-link" aria-current="page" href="/boards/gold">골드게시판</a>
+                    </li>
+                </ul>
+            </div>
+            <div class="justify-content-between" id="navbarNav" style="padding: 5px 30px">
+
+                <!-- 로그인 안 했을때 -->
+                <ul class="navbar-nav" sec:authorize="isAnonymous()">
+                    <li class="nav-item">
+                        <button class="btn nav-btn" onclick="location.href = '/users/login'">로그인</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="btn nav-btn" onclick="location.href = '/users/join'">회원가입</button>
+                    </li>
+                </ul>
+
+                <!-- 로그인 했을때 -->
+                <ul class="navbar-nav" sec:authorize="isAuthenticated()">
+                    <li class="nav-item" sec:authorize="hasAuthority('ADMIN')">
+                        <button class="btn nav-btn" onclick="location.href = '/users/admin'" style="width: fit-content">관리자 페이지</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="btn nav-btn" onclick="location.href = '/users/myPage/board'">마이페이지</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="btn nav-btn" onclick="location.href = '/users/logout'">로그아웃</button>
+                    </li>
+                </ul>
+
+            </div>
+        </div>
+    </nav>
+</div>
+
+</body>

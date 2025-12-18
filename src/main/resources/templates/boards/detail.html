@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="https://www.thymeleaf.org/extras/spring-security">
+<head th:replace="fragments/header.html :: head" />
+<body>
+<div th:replace="fragments/header.html :: header (${category})"/>
+<div class="row">
+  <div class="offset-3 col-6">
+    <form class="form-group" th:object="${boardDto}" th:method="post"
+          th:action="|@{/boards/{category}/{boardId}/edit (category = ${category}, boardId=${boardDto.id})}|" enctype="multipart/form-data">
+      <div style="float: right;" align="right">
+        <div th:text="'작성일 : ' + ${#temporals.format(boardDto.createdAt, 'yy/MM/dd HH:mm')}"></div>
+        <div th:text="'최근 수정일 : ' + ${#temporals.format(boardDto.lastModifiedAt, 'yy/MM/dd HH:mm')}"></div>
+        <br/>
+        <div sec:authorize="isAuthenticated()">
+          <div th:if="${likeCheck == false}" style="font-size: large">
+            <button class="btn icon-btn" type="button"
+                    th:onclick="|location.href='@{/likes/add/{boardId} (boardId=${boardDto.id})}'|">
+              <img class="small-img" src="/images/empty-hearts.svg">
+            </button>[[${boardDto.likeCnt}]]
+          </div>
+          <div th:unless="${likeCheck == false}" style="font-size: large">
+            <button class="btn icon-btn" type="button"
+                    onclick="deleteLike()">
+              <img class="small-img" src="/images/fill-hearts.svg">
+            </button>[[${boardDto.likeCnt}]]
+          </div>
+        </div>
+        <div sec:authorize="isAnonymous()">
+          <div style="font-size: large">
+            <button class="btn icon-btn" type="button"
+                    onclick="askLogin()">
+              <img class="small-img" src="/images/empty-hearts.svg">
+            </button>[[${boardDto.likeCnt}]]
+          </div>
+        </div>
+      </div>
+      <div th:text="'작성자 : ' + *{userNickname}" style="font-size: large"></div>
+      <br/>
+      <div>
+        <label th:for="title" style="font-size: large">제목 : </label>
+        <input type="text" th:field="*{title}" style="width: 50%" readonly>
+      </div>
+      <br/>
+      <div>
+        <label th:for="body" style="font-size: large">내용 : </label>
+        <textarea rows="10" style="width: 100%;" th:field="*{body}" readonly/>
+      </div>
+      <br/>
+      <div id="image-div2" hidden>
+        <label th:for="newImage">이미지 첨부 : </label>
+        <input type="file" th:field="*{newImage}" style="width: 50%">
+        <br/>
+      </div>
+      <div th:if="${boardDto.uploadImage != null}" id="image-div1">
+        이미지 : <a th:href="|/boards/images/download/${boardDto.id}|" th:text="${boardDto.uploadImage.originalFilename}" /> <br/>
+        <img th:src="|/boards/images/${boardDto.uploadImage.savedFilename}|"
+             width="200px" height="200px" style="border-color: black; border-style: solid; border-width: thin;"/>
+      </div>
+      <br/>
+      <div id="div2" align="center" hidden>
+        <button class="btn edit-btn" type="submit">수정 완료</button>
+      </div>
+    </form>
+    <div id="div1" th:if="${loginUserLoginId == boardDto.userLoginId}" align="center">
+      <button class="btn edit-btn" onclick="clickEdit()">수정</button>
+      <button th:if="${category != 'greeting'}" class="btn del-btn" onclick="clickDelete()">삭제</button>
+    </div>
+    <div th:unless="${loginUserLoginId == boardDto.userLoginId}" sec:authorize="hasAuthority('ADMIN')" align="center">
+      <button th:if="${category != 'greeting'}" class="btn del-btn" onclick="clickDelete()">삭제</button>
+    </div>
+    <br/><hr/>
+    <form class="form-group" th:object="${commentCreateRequest}"  th:method="post" th:action="|@{/comments/{boardId} (boardId=${boardDto.id})}|">
+      <div style="text-align: right">
+        <!-- 로그인 했을 때 -->
+        <div sec:authorize="isAuthenticated()">
+          <textarea rows="3" th:field="*{body}" placeholder="댓글을 입력해 주세요" style="width: 100%"/>
+          <button class="btn post-btn" type="submit">댓글 추가</button>
+        </div>
+        <!-- 로그인 안 했을 때 -->
+        <div sec:authorize="isAnonymous()">
+          <textarea rows="3" th:field="*{body}" placeholder="로그인한 유저만 댓글을 작성할 수 있습니다" style="width: 100%" readonly/>
+        </div>
+      </div>
+    </form>
+    <br/>
+    <h3 th:text="${commentList.size()} + '개의 댓글'"></h3>
+    <hr/>
+    <div th:each="comment : ${commentList}" th:align="center">
+      <form class="card" style="width: 80%" th:object="${commentCreateRequest}" th:method="post"
+            th:action="|@{/comments/{commentId}/edit (commentId=${comment.id})}|">
+        <div class="card-body" style="text-align: left;">
+          <div>
+            <div style="float: left">
+              <h5 class="card-title" th:text="'작성자 : ' + ${comment.user.nickname}"></h5>
+              <h6 class="card-subtitle mb-2 text-muted" th:text="'작성일 : ' + ${#temporals.format(comment.createdAt, 'yy/MM/dd HH:mm')}"></h6>
+            </div>
+            <div th:if="${comment.user.loginId == loginUserLoginId}" style="float: right;">
+              <button type="submit" class="btn edit-btn" style="width: fit-content; margin: 0px;">수정</button>
+              <button type="button" class="btn del-btn" style="width: fit-content; margin: 0px;"
+                      th:onclick="|location.href='@{/comments/{commentId}/delete (commentId=${comment.id})}'|">삭제</button>
+            </div>
+            <div th:unless="${comment.user.loginId == loginUserLoginId}" sec:authorize="hasAuthority('ADMIN')" style="float: right;">
+              <button type="button" class="btn del-btn" style="width: fit-content; margin: 0px;"
+                      th:onclick="|location.href='@{/comments/{commentId}/delete (commentId=${comment.id})}'|">삭제</button>
+            </div>
+          </div>
+
+          <div th:if="${comment.user.loginId == loginUserLoginId}">
+                            <textarea rows="3" class="card-text" th:text="${comment.body}" id="body" name="body"
+                                      style="margin-bottom: 10px; width: 100%"></textarea>
+          </div>
+          <div th:unless="${comment.user.loginId == loginUserLoginId}">
+            <textarea rows="3" class="card-text" th:text="${comment.body}" style="margin-bottom: 10px; width: 100%" readonly></textarea>
+          </div>
+        </div>
+      </form>
+      <br/>
+    </div>
+    <br/><br/>
+  </div>
+</div>
+
+<script th:inline="javascript">
+  function clickEdit() {
+      if (confirm("이미지가 있는 게시글 수정 시 기존의 이미지가 삭제됩니다.\n수정 하시겠습니까?") == true) {
+          document.getElementById("div1").style.display = 'none';
+          if (document.getElementById("image-div1") != null) {
+              document.getElementById("image-div1").style.display = 'none';
+          }
+          document.getElementById("div2").removeAttribute("hidden");
+          document.getElementById("image-div2").removeAttribute("hidden");
+          document.getElementById("title").removeAttribute("readonly");
+          document.getElementById("body").removeAttribute("readonly");
+      }
+  }
+  function clickDelete() {
+      if (confirm("해당 글을 삭제 하시겠습니까?") == true) {
+          location.href = "/boards/" + [[${category}]] + "/" + [[${boardDto.id}]] + "/delete";
+      }
+  }
+  function deleteLike() {
+      if (confirm("좋아요를 취소 하시겠습니까?") == true) {
+          location.href = "/likes/delete/" + [[${boardDto.id}]];
+      }
+  }
+  function askLogin() {
+      if (confirm("로그인이 필요한 작업입니다.\n로그인 하시겠습니까?") == true) {
+          location.href = "/users/login";
+      }
+  }
+
+  $("#newImage").on("change", (e) => {
+
+      let f = e.target.files[0];
+
+      // 확장자 체크 => 이미지 파일이 맞는지
+      let ext = f.name.substr(f.name.lastIndexOf('.')+1).toLowerCase();
+      const acceptType = ['gif','png','jpg','jpeg', 'bmp'];
+
+      if(acceptType.indexOf(ext) == -1) {
+          alert("이미지만 업로드 가능합니다.")
+          delete_image();
+          return;
+      }
+
+      //최대 용량 10MB 초과
+      if (f.size > 10 * 1024 * 1024) {
+          alert("업로드 이미지의 최대 크기는 10MB입니다.");
+          delete_image();
+          return;
+      }
+  });
+
+  function delete_image() {
+      let agent = navigator.userAgent.toLowerCase();
+
+      // 브라우저가 IE인 경우
+      if ( (navigator.appName == 'Netscape' && navigator.userAgent.search('Trident') != -1) || (agent.indexOf("msie") != -1) ){
+          $("#newImage").replaceWith( $("#newImage").clone(true) );
+      } else {
+          $("#newImage").val("");
+     }
+  }
+</script>
+</body>
+</html>

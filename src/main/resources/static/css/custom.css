@@ -1,0 +1,169 @@
+.nav-btn {
+    background-color: lightcyan;
+    font-weight: bold;
+    border: none;
+    height: 40px;
+    width: 100px;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+.nav-btn:hover, .nav-btn:focus, .nav-btn:active:focus {
+    background-color: cyan;
+    animation: jelly 0.5s;
+}
+
+.search-btn {
+    background-color: lightcyan;
+    font-weight: bold;
+    border: none;
+    height: 40px;
+    width: 100px;
+}
+
+.search-btn:hover, .search-btn:focus, .search-btn:active:focus {
+    background-color: cyan;
+    animation: jelly 0.5s;
+}
+
+.icon-btn{
+    background-color: unset;
+    border: none;
+}
+
+.icon-btn:hover, .icon-btn:focus, .icon-btn:active:focus {
+    border: none;
+    animation: jelly 0.5s;
+}
+
+.user-btn {
+    background-color: lime;
+    font-weight: bold;
+    border: none;
+    height: 40px;
+    width: 100px;
+}
+
+.user-btn:hover, .user-btn:focus, .user-btn:active:focus {
+    background-color: limegreen;
+    animation: jelly 0.5s;
+}
+
+.post-btn {
+    background-color: lightgoldenrodyellow;
+    font-weight: bold;
+    border: none;
+    height: 40px;
+    width: 100px;
+}
+
+.post-btn:hover, .post-btn:focus, .post-btn:active:focus {
+    background-color: yellow;
+    animation: jelly 0.5s;
+}
+
+.edit-btn {
+    background-color: lime;
+    font-weight: bold;
+    border: none;
+    height: 40px;
+    width: 100px;
+}
+
+.edit-btn:hover, .edit-btn:focus, .edit-btn:active:focus {
+    background-color: limegreen;
+    animation: jelly 0.5s;
+}
+
+.del-btn {
+    background-color: orangered;
+    font-weight: bold;
+    border: none;
+    height: 40px;
+    width: 100px;
+}
+
+.del-btn:hover, .del-btn:focus, .del-btn:active:focus {
+    background-color: #CC0000;
+    animation: jelly 0.5s;
+}
+
+.select-btn {
+    background-color: deepskyblue;
+    font-weight: bold;
+    margin: 0px 30px;
+    border: none;
+    height: 40px;
+    width: 130px;
+}
+
+.select-btn:hover, .select-btn:focus, .select-btn:active:focus {
+    background-color: dodgerblue;
+    animation: jelly 0.5s;
+}
+
+.selected-btn {
+    background-color: cornflowerblue;
+    font-weight: bold;
+    margin: 0px 30px;
+    border: none;
+    height: 40px;
+    width: 130px;
+}
+
+.selected-btn:hover, .selected-btn:focus, .selected-btn:active:focus {
+    background-color: dodgerblue;
+    animation: jelly 0.5s;
+}
+
+@keyframes jelly {
+    25% {
+        transform: scale(0.9, 1.1);
+    }
+
+    50% {
+        transform: scale(1.1, 0.9);
+    }
+
+    75% {
+        transform: scale(0.95, 1.05);
+    }
+}
+
+.user-form {
+    width: max-content;
+    height: max-content;
+    background-color: lightgoldenrodyellow;
+    border: solid 1px yellow;
+    border-radius: 30px;
+    padding: 50px 50px 30px 50px;
+}
+
+.user-form>div>label {
+    font-weight: bold;
+}
+
+.user-form>div>input {
+    width: 300px;
+}
+
+.error-input {
+    border-color: red;
+}
+
+.error-div {
+    color: red;
+}
+
+.nav-link.active {
+    font-weight: bold;
+}
+
+.small-img {
+    width: 30px;
+    height: 30px;
+}
+
+.notice-tr {
+    background-color: lightgoldenrodyellow;
+}

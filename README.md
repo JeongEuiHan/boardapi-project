@@ -67,9 +67,34 @@ React + Spring Boot 기반 REST API 게시판 프로젝트**
 ---
 
 ## 📂 프로젝트 구성
+```text
 boardapi/
-├─ board/ # Spring Boot REST API 서버
-└─ frontend/ # React 클라이언트
+├─ board/        # Spring Boot REST API 서버
+│  ├─ build.gradle
+│  └─ src/
+│     ├─ main/
+│     │  ├─ java/
+│     │  │  └─ spboard/board/
+│     │  │     ├─ controller/
+│     │  │     ├─ service/
+│     │  │     ├─ repository/
+│     │  │     ├─ domain/
+│     │  │     └─ config/
+│     │  └─ resources/
+│     │     └─ application.yml
+│     └─ test/
+│        └─ java/
+│           └─ spboard/board/
+│              └─ service/
+│
+└─ frontend/     # React 클라이언트
+   ├─ package.json
+   └─ src/
+      ├─ api/
+      ├─ components/
+      └─ pages/
+
+```
 
 
 ---

@@ -149,7 +149,7 @@ flowchart LR
 - User ↔ Board ↔ Like 연관관계
 - (user_id, board_id) 유니크 제약으로 좋아요 중복 방지
 
-![erd](docs/screenshots/erd.drawio)
+![erd](docs/screenshots/erd.png)
 
 (※ 추후 docs/erd.png 추가 예정)
 

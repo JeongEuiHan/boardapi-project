@@ -28,7 +28,7 @@ Spring Boot 기반 REST API 게시판 프로젝트입니다.
 ## 🎯 Project Goals
 
 - REST API 기반 게시판 시스템 설계
-- JWT 인증을 활용한 사용자 인증/인가 구현
+- JWT 기반 인증/인가 구조 구현
 - Service 계층 중심의 권한 검증 로직 설계
 - DB 제약 조건을 활용한 데이터 무결성 보장
 - 문제 상황을 기록하고 개선한 Troubleshooting 경험 축적
@@ -52,7 +52,7 @@ Spring Boot 기반 REST API 게시판 프로젝트입니다.
 ### Database
 - MySQL
 
-### Tools & Docs
+### Tool
 - Postman
 - Gradle
 - Git / GitHub
@@ -61,11 +61,11 @@ Spring Boot 기반 REST API 게시판 프로젝트입니다.
 ## 🤔 기술적 의사결정 (Why)
 
 ### Spring Boot
-Spring Boot는 인증, 보안, 트랜잭션 처리 등
-백엔드 서비스에 필수적인 기능을 빠르게 구성할 수 있어 선택했습니다.
+인증, 보안, 트랜잭션 등 백엔드 서비스에 필수적인 기능을
+안정적으로 구성할 수 있어 선택했습니다.
 
-Controller → Service → Repository 계층을 명확히 분리하여  
-**요청 검증 로직을 어느 계층에 두어야 유지보수가 쉬운지**를 고민하며 설계했습니다.
+Controller → Service → Repository 계층을 명확히 분리하여
+요청 검증 로직을 어디에 두어야 유지보수가 쉬운지를 고민하며 설계했습니다.
 
 ### Spring Data JPA
 단순 CRUD 구현을 넘어서,
@@ -79,9 +79,8 @@ Controller → Service → Repository 계층을 명확히 분리하여
 ORM 사용 시 발생할 수 있는 대표적인 문제를 인지하고 해결하는 것을 학습 목표로 삼았습니다.
 
 ### MySQL
-실무에서 널리 사용되는 RDBMS로,
-유니크 제약, 외래키 등을 활용해  
-**애플리케이션 로직뿐 아니라 DB 레벨에서도 무결성을 보장하는 설계**를 연습하기 위해 선택했습니다.
+유니크 제약, 외래키 등을 활용해
+**애플리케이션 로직 + DB 제약으로 데이터 무결성을 함께 보장하는 설계**를 연습하기 위해 선택했습니다.
 
 ---
 
@@ -90,7 +89,7 @@ ORM 사용 시 발생할 수 있는 대표적인 문제를 인지하고 해결�
 ### 회원 / 인증
 - 회원 가입 / 로그인
 - JWT 기반 인증 처리
-- 권한(Role) 기반 접근 제어
+- Role 기반 접근 제어
 
 ### 게시판
 - 게시글 CRUD
@@ -104,7 +103,6 @@ ORM 사용 시 발생할 수 있는 대표적인 문제를 인지하고 해결�
 
 ---
 
-
 ## 📂 프로젝트 구성
 
 ```text
@@ -117,7 +115,7 @@ boardapi/
 ---
 
 ## 🏗 아키텍처
-```yaml
+```text
 Client
 ↓
 Controller (Request / Response)
@@ -133,6 +131,15 @@ MySQL
 - Controller는 요청 전달과 응답 책임만 수행
 - 비즈니스 규칙이 한 곳에 모이도록 설계
 
+```mermaid
+flowchart LR
+  Client[React | Swagger | Postman] -->|HTTP| API[Spring Boot REST API]
+  API --> Filter[JwtAuthenticationFilter]
+  Filter --> Controller
+  Controller --> Service
+  Service --> Repository
+  Repository --> MySQL[(Database)]
+```
 (※ 추후 docs/architecture.png 추가 예정)
 
 ---
@@ -141,62 +148,101 @@ MySQL
 - User ↔ Board ↔ Like 연관관계
 - (user_id, board_id) 유니크 제약으로 좋아요 중복 방지
 
+```mermaiid
+erDiagram
+  USER ||--o{ BOARD : writes
+  USER ||--o{ COMMENT : writes
+  USER ||--o{ LIKE : presses
+  BOARD ||--o{ COMMENT : has
+  BOARD ||--o{ LIKE : receives
+  BOARD ||--o| UPLOAD_IMAGE : has
+
+  USER {
+    bigint id PK
+    string login_id
+    string password
+    string nickname
+    datetime created_at
+    int received_like_cnt
+    enum role
+  }
+
+  BOARD {
+    bigint id PK
+    string title
+    string body
+    enum category
+    bigint user_id FK
+    int like_cnt
+    int comment_cnt
+    boolean notice
+    bigint upload_image_id FK
+  }
+
+  COMMENT {
+    bigint id PK
+    string body
+    bigint user_id FK
+    bigint board_id FK
+  }
+
+  LIKE {
+    bigint id PK
+    bigint user_id FK
+    bigint board_id FK
+  }
+
+  UPLOAD_IMAGE {
+    bigint id PK
+    string original_filename
+    string saved_filename
+  }
+```
 (※ 추후 docs/erd.png 추가 예정)
 
 ---
-
-
-### 시스템 구성도
-
-```mermaid
-flowchart LR
-    A[Client<br/>React] -->|HTTP / JSON| B[API Server<br/>Spring Boot]
-    B -->|JPA| C[(Database)]
-```
 
 ### 요청 처리 흐름 (JWT)
 
 ```mermaid
 sequenceDiagram
-    participant Client as React Client
+    participant Client
     participant Filter as JWT Filter
-    participant Controller as Controller
-    participant Service as Service
-    participant Repo as Repository
-    participant DB as DB
+    participant Controller
+    participant Service
+    participant Repo
+    participant DB
 
-    Client->>Filter: API 요청 (Authorization: Bearer JWT)
+    Client->>Filter: API 요청 (Bearer JWT)
 
     alt JWT 유효
-        Filter->>Controller: 인증 정보 저장(SecurityContext)
+        Filter->>Controller: Authentication 설정
         Controller->>Service: 비즈니스 로직 호출
-        Service->>Service: 권한/정책 검증(작성자/등급/중복)
+        Service->>Service: 권한/정책 검증
         Service->>Repo: DB 접근
         Repo->>DB: Query
         DB-->>Repo: Result
         Repo-->>Service: Result
-        Service-->>Controller: Response DTO
+        Service-->>Controller: Response
         Controller-->>Client: 200 OK
-    else JWT 없음/만료/위조
+    else JWT 없음/만료
         Filter-->>Client: 401 Unauthorized
     end
 ```
 
 ## 🛠 Troubleshooting (핵심 문제 해결)
 
-### 1️⃣ JWT 인증이 없는 요청을 구분하지 못하던 문제
+### 1️⃣ 인증 실패와 권한 부족이 구분되지 않던 문제
 
 **문제 상황**
-- 인증 여부에 대한 명확한 기준 없이 API가 처리됨
-- 인증 실패와 권한 부족이 동일한 에러로 보이는 구조
+- 인증 실패와 권한 부족이 동일한 에러로 처리됨
 
 **해결**
-- 모든 요청에 JWT 인증을 적용
-- 인증 실패(401)와 권한 부족(403)을 명확히 분리
+- JWT 인증 필터 적용
+- 인증 실패(401)와 권한 부족(403) 응답 분리
 
-**검증 결과**
-
-- 인증 없이 요청 → **401 Unauthorized**
+**결과**
+- 인증 여부와 권한 상태를 명확히 구분 가능
   
 ![JWT 인증 전](docs/screenshots/auth-before.png)
 
@@ -206,14 +252,14 @@ sequenceDiagram
 
 ---
 
-### 2️⃣ 게시판 카테고리별 권한이 우회 가능한 문제
+### 2️⃣ 게시판 카테고리 권한 우회 문제
 
 **문제 상황**
 - 프론트엔드 제어 또는 Controller 분기로 권한 처리
-- URL 조작이나 직접 API 호출로 권한 우회 가능
+- URL 직접 호출로 권한 우회 가능
 
 **해결**
-- 모든 게시판 권한 정책을 **Service 계층에서 중앙 관리**
+- 모든 게시판 접근 정책을 **Service 계층에서 중앙 관리**
 - 카테고리 + 사용자 등급 기준으로 서버에서 최종 검증
 
 **검증 결과**
@@ -225,15 +271,11 @@ sequenceDiagram
 ### 3. 좋아요 중복 처리 문제
 
 #### 문제 상황
-로그인 사용자가 동일 게시글에 좋아요 API를 여러 번 호출할 경우,
-좋아요 수가 중복 증가하는 문제가 발생했습니다.
+- 동일 사용자의 중복 좋아요 요청으로 카운트 증가
 
-프론트엔드에서 버튼을 비활성화해도
-API 직접 호출로는 언제든지 중복 요청이 가능했습니다.
-
-#### 해결 방법
-- Service 계층에서 좋아요 존재 여부를 먼저 검증
-- DB 레벨에서 (user_id, board_id) 유니크 제약 추가
+#### 해결
+- Service 계층에서 좋아요 존재 여부 검증
+- DB 레벨에서 (user_id, board_id) 유니크 제약 적용
 
 ```java
 likeRepository.existsByUser_LoginIdAndBoardId(loginId, boardId);
@@ -241,11 +283,8 @@ likeRepository.existsByUser_LoginIdAndBoardId(loginId, boardId);
 이를 통해 로직 검증 + DB 제약이라는
 이중 안전장치 구조를 적용했습니다.
 
----
-
 **결과**
-- 인증(401)과 권한(403)을 명확히 구분
-- 프론트엔드에 의존하지 않는 서버 책임 구조 확보
+- 로직 + DB 제약의 이중 안전장치 구조 확보
 
 ---
 
@@ -258,8 +297,8 @@ likeRepository.existsByUser_LoginIdAndBoardId(loginId, boardId);
 
 ### 💬 프로젝트를 통해 느낀 점
 - 서버는 클라이언트 요청을 신뢰해서는 안 된다
-- 권한 검증은 Controller가 아닌 Service 책임
-- 데이터 무결성은 로직 + DB 제약으로 함께 보장해야 한다
+- 권한 검증은 Controller가 아닌 **Service 책임**
+- 데이터 무결성은 **로직 + DB 제약**으로 함께 보장해야 한다
 - “기능이 된다”와 “서비스로 안전하다”는 전혀 다르다
 
 ---

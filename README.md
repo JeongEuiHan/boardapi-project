@@ -140,6 +140,7 @@ flowchart LR
   Service --> Repository
   Repository --> MySQL[(Database)]
 ```
+
 (※ 추후 docs/architecture.png 추가 예정)
 
 ---
@@ -148,7 +149,7 @@ flowchart LR
 - User ↔ Board ↔ Like 연관관계
 - (user_id, board_id) 유니크 제약으로 좋아요 중복 방지
 
-```mermaiid
+```mermaid
 erDiagram
   USER ||--o{ BOARD : writes
   USER ||--o{ COMMENT : writes
@@ -198,6 +199,7 @@ erDiagram
     string saved_filename
   }
 ```
+
 (※ 추후 docs/erd.png 추가 예정)
 
 ---

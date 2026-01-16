@@ -150,7 +150,7 @@ flowchart LR
 - (user_id, board_id) 유니크 제약으로 좋아요 중복 방지
 
 <p align="center">
-  <img src="./docs/screenshots/erd.png" width="800" alt="ERD Diagram">
+  <img src="./docs/screenshots/erd2.png" width="800" alt="ERD Diagram">
 </p>
 
 (※ 추후 docs/erd.png 추가 예정)

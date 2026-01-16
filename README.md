@@ -142,7 +142,7 @@ flowchart LR
 ```
 
 <p align="center">
-  <img src="https://github.com/사용자명/저장소명/raw/main/images/architecture.svg" width="800" alt="System Architecture">
+  <img src="./docs/screenshots/architecture.svg" width="800" alt="System Architecture">
 </p>
 (※ 추후 docs/architecture.png 추가 예정)
 

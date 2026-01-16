@@ -133,7 +133,7 @@ MySQL
 
 ```mermaid
 flowchart LR
-  Client[React | Swagger | Postman] -->|HTTP| API[Spring Boot REST API]
+  Client[React | Postman] -->|HTTP| API[Spring Boot REST API]
   API --> Filter[JwtAuthenticationFilter]
   Filter --> Controller
   Controller --> Service

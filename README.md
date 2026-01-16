@@ -149,56 +149,7 @@ flowchart LR
 - User ↔ Board ↔ Like 연관관계
 - (user_id, board_id) 유니크 제약으로 좋아요 중복 방지
 
-```mermaid
-erDiagram
-  USER ||--o{ BOARD : writes
-  USER ||--o{ COMMENT : writes
-  USER ||--o{ LIKE : presses
-  BOARD ||--o{ COMMENT : has
-  BOARD ||--o{ LIKE : receives
-  BOARD ||--o| UPLOAD_IMAGE : has
-
-  USER {
-    bigint id PK
-    string login_id
-    string password
-    string nickname
-    datetime created_at
-    int received_like_cnt
-    enum role
-  }
-
-  BOARD {
-    bigint id PK
-    string title
-    string body
-    enum category
-    bigint user_id FK
-    int like_cnt
-    int comment_cnt
-    boolean notice
-    bigint upload_image_id FK
-  }
-
-  COMMENT {
-    bigint id PK
-    string body
-    bigint user_id FK
-    bigint board_id FK
-  }
-
-  LIKE {
-    bigint id PK
-    bigint user_id FK
-    bigint board_id FK
-  }
-
-  UPLOAD_IMAGE {
-    bigint id PK
-    string original_filename
-    string saved_filename
-  }
-```
+![erd](docs/screenshots/erd.png)
 
 (※ 추후 docs/erd.png 추가 예정)
 

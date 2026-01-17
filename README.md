@@ -148,34 +148,6 @@ MySQL
 
 ---
 
-### 요청 처리 흐름 (JWT)
-
-```mermaid
-sequenceDiagram
-    participant Client
-    participant Filter as JWT Filter
-    participant Controller
-    participant Service
-    participant Repo
-    participant DB
-
-    Client->>Filter: API 요청 (Bearer JWT)
-
-    alt JWT 유효
-        Filter->>Controller: Authentication 설정
-        Controller->>Service: 비즈니스 로직 호출
-        Service->>Service: 권한/정책 검증
-        Service->>Repo: DB 접근
-        Repo->>DB: Query
-        DB-->>Repo: Result
-        Repo-->>Service: Result
-        Service-->>Controller: Response
-        Controller-->>Client: 200 OK
-    else JWT 없음/만료
-        Filter-->>Client: 401 Unauthorized
-    end
-```
-
 ## 🛠 Troubleshooting (핵심 문제 해결)
 
 ### 1️⃣ 인증 실패와 권한 부족이 구분되지 않던 문제

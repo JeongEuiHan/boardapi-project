@@ -131,20 +131,10 @@ MySQL
 - Controller는 요청 전달과 응답 책임만 수행
 - 비즈니스 규칙이 한 곳에 모이도록 설계
 
-```mermaid
-flowchart LR
-  Client[React | Postman] -->|HTTP| API[Spring Boot REST API]
-  API --> Filter[JwtAuthenticationFilter]
-  Filter --> Controller
-  Controller --> Service
-  Service --> Repository
-  Repository --> MySQL[(Database)]
-```
 
 <p align="center">
   <img src="./docs/screenshots/architecture.svg" width="800" alt="System Architecture">
 </p>
-(※ 추후 docs/architecture.png 추가 예정)
 
 ---
 
@@ -153,10 +143,8 @@ flowchart LR
 - (user_id, board_id) 유니크 제약으로 좋아요 중복 방지
 
 <p align="center">
-  <img src="./docs/screenshots/erd.png" width="800" alt="ERD Diagram">
+  <img src="./docs/screenshots/erd.svg" width="800" alt="ERD Diagram">
 </p>
-
-(※ 추후 docs/erd.png 추가 예정)
 
 ---
 

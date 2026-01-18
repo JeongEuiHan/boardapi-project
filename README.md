@@ -223,5 +223,17 @@ Service 정책 검증을 목적으로 한 테스트이며,
 
 ---
 
+## 실행 방법
+1. Backend 실행
+   - MySQL 설정
+   - application.yml 환경변수 설정
+   - `./gradlew bootRun`
+
+2. Frontend 실행
+   - `npm install`
+   - `npm run dev`
+  
+---
+
 ### Links
 - GitHub Repository: https://github.com/JeongEuiHan/boardapi-project

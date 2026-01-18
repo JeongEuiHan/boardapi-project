@@ -202,12 +202,13 @@ likeRepository.existsByUser_LoginIdAndBoardId(loginId, boardId);
 ---
 
 ##  테스트
-- JUnit5 기반 테스트 환경 구성
-- Service 계층 단위 테스트 작성
-- 주요 테스트 항목
-  - 게시판 카테고리 권한 검증 (403)
-  - 작성자 불일치 시 수정/삭제 제한
-  - 좋아요 중복 요청 처리 검증
+- JUnit5 + Mockito 기반 Service 계층 단위 테스트
+- B/외부 의존성을 Mock 처리해 권한 검증과 비즈니스 로직 분기에 집중
+**검증 내용**
+- 게시판 목록 조회 시 카테고리·검색 조건별 Repository 호출 및 정렬 정책 검증
+- GOLD 게시판 접근 권한 검증 (SILVER 접근 시 AccessDeniedException)
+- 작성자 불일치 시 게시글 수정 제한
+- 게시글 수정 시 이미지 교체 로직 검증 (기존 이미지 삭제 → 새 이미지 저장)
 
 ---
 
@@ -216,6 +217,9 @@ likeRepository.existsByUser_LoginIdAndBoardId(loginId, boardId);
 - 권한 검증은 Controller가 아닌 **Service 책임**
 - 데이터 무결성은 **로직 + DB 제약**으로 함께 보장해야 한다
 - “기능이 된다”와 “서비스로 안전하다”는 전혀 다르다
+
+Service 정책 검증을 목적으로 한 테스트이며,
+쿼리/매핑 검증은 @DataJpaTest로 확장 가능하도록 분리했습니다.
 
 ---
 

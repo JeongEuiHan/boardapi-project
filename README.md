@@ -1,7 +1,7 @@
 # Spring Boot REST API 게시판 프로젝트
 
 Spring Boot 기반 REST API 게시판 프로젝트입니다.  
-단순 기능 구현이 아니라 **서버가 클라이언트 요청을 끝까지 책임지는 구조**를 만드는 것을 목표로 개발했습니다.
+단순 기능 구현이 아니라 **서버가 클라이언트 요청을 끝까지 책임지는 구조**를 직접 설계하고 구현하는 것을 목표로 개발했습니다.
 
 ---
 
@@ -25,7 +25,7 @@ Spring Boot 기반 REST API 게시판 프로젝트입니다.
 
 ---
 
-## 🎯 Project Goals
+## Project Goals
 
 - REST API 기반 게시판 시스템 설계
 - JWT 기반 인증/인가 구조 구현
@@ -58,7 +58,7 @@ Spring Boot 기반 REST API 게시판 프로젝트입니다.
 - Git / GitHub
 ---
 
-## 🤔 기술적 의사결정 (Why)
+## 기술적 의사결정 (Why)
 
 ### Spring Boot
 인증, 보안, 트랜잭션 등 백엔드 서비스에 필수적인 기능을
@@ -75,16 +75,20 @@ Controller → Service → Repository 계층을 명확히 분리하여
 
 를 직접 경험하기 위해 JPA를 사용했습니다.
 
-특히 N+1 문제, Fetch 전략 등
-ORM 사용 시 발생할 수 있는 대표적인 문제를 인지하고 해결하는 것을 학습 목표로 삼았습니다.
+ORM 사용 시 발생할 수 있는 N+1 문제와 Fetch 전략의 중요성을 인지하고 있으며,
+현재 프로젝트에서는 기본 조회 구조를 유지하되
+조회 API 확장 시 fetch join / EntityGraph 적용을 개선 과제로 남겨두었습니다.
 
 ### MySQL
-유니크 제약, 외래키 등을 활용해
-**애플리케이션 로직 + DB 제약으로 데이터 무결성을 함께 보장하는 설계**를 연습하기 위해 선택했습니다.
+애플리케이션 로직뿐만 아니라,
+- 유니크 제약
+- 외래키 제약
+을 함께 활용해
+**로직 + DB 제약으로 데이터 무결성을 이중으로 보장하는 설계**를 연습하기 위해 선택했습니다.
 
 ---
 
-## ✨ Key Features
+## Key Features
 
 ### 회원 / 인증
 - 회원 가입 / 로그인
@@ -103,7 +107,7 @@ ORM 사용 시 발생할 수 있는 대표적인 문제를 인지하고 해결�
 
 ---
 
-## 📂 프로젝트 구성
+## 프로젝트 구성
 
 ```text
 boardapi/
@@ -114,46 +118,35 @@ boardapi/
 
 ---
 
-## 🏗 아키텍처
-```text
-Client
-↓
-Controller (Request / Response)
-↓
-Service (Business Logic & Authorization)
-↓
-Repository (JPA)
-↓
-MySQL
-```
-
-- 인증 및 권한 검증은 **Service 계층에서 처리**
-- Controller는 요청 전달과 응답 책임만 수행
-- 비즈니스 규칙이 한 곳에 모이도록 설계
-
+##  아키텍처
 
 <p align="center">
   <img src="./docs/screenshots/architecture.svg" width="800" alt="System Architecture">
 </p>
 
+- Controller는 요청/응답만 담당
+- **권한 검증과 비즈니스 규칙은 Service 계층에서 처리**
+- 규칙이 한 곳에 모이도록 설계해 기능 확장 시에도 기준 유지
 ---
 
 ## 🗂 ERD
-- User ↔ Board ↔ Like 연관관계
-- (user_id, board_id) 유니크 제약으로 좋아요 중복 방지
 
 <p align="center">
   <img src="./docs/screenshots/erd.svg" width="800" alt="ERD Diagram">
 </p>
 
+- User ↔ Board ↔ Like 연관관계
+- (user_id, board_id) 유니크 제약으로 좋아요 중복 방지
+
 ---
 
-## 🛠 Troubleshooting (핵심 문제 해결)
+## Troubleshooting (핵심 문제 해결)
 
-### 1️⃣ 인증 실패와 권한 부족이 구분되지 않던 문제
+### 1. 인증 실패(401)와 권한 부족(403)이 구분되지 않던 문제
 
 **문제 상황**
-- 인증 실패와 권한 부족이 동일한 에러로 처리됨
+- 인증되지 않은 요청과 권한이 없는 요청이 동일한 에러로 처리
+- 클라이언트에서 원인 파악이 어려움
 
 **해결**
 - JWT 인증 필터 적용
@@ -170,7 +163,7 @@ MySQL
 
 ---
 
-### 2️⃣ 게시판 카테고리 권한 우회 문제
+### 2. 게시판 카테고리 권한 우회 문제
 
 **문제 상황**
 - 프론트엔드 제어 또는 Controller 분기로 권한 처리
@@ -183,13 +176,14 @@ MySQL
 **검증 결과**
 
 - SILVER 사용자가 GOLD 게시판 작성 시 → **403 Forbidden**
+- 클라이언트 조작과 무관하게 서버에서 정책 강제
   
 ![GOLD 게시판 권한 차단](docs/screenshots/forbidden-gold.png)
 
 ### 3. 좋아요 중복 처리 문제
 
 #### 문제 상황
-- 동일 사용자의 중복 좋아요 요청으로 카운트 증가
+- 동일 사용자의 중복 좋아요 요청으로 카운트 증가 가능
 
 #### 해결
 - Service 계층에서 좋아요 존재 여부 검증
@@ -203,17 +197,21 @@ likeRepository.existsByUser_LoginIdAndBoardId(loginId, boardId);
 
 **결과**
 - 로직 + DB 제약의 이중 안전장치 구조 확보
+- 동시 요청 상황에서도 데이터 무결성 유지
 
 ---
 
-## 🧪 테스트
+##  테스트
 - JUnit5 기반 테스트 환경 구성
 - Service 계층 단위 테스트 작성
-- 권한 검증 및 비즈니스 로직 테스트 포함
+- 주요 테스트 항목
+  - 게시판 카테고리 권한 검증 (403)
+  - 작성자 불일치 시 수정/삭제 제한
+  - 좋아요 중복 요청 처리 검증
 
 ---
 
-### 💬 프로젝트를 통해 느낀 점
+###  프로젝트를 통해 느낀 점
 - 서버는 클라이언트 요청을 신뢰해서는 안 된다
 - 권한 검증은 Controller가 아닌 **Service 책임**
 - 데이터 무결성은 **로직 + DB 제약**으로 함께 보장해야 한다

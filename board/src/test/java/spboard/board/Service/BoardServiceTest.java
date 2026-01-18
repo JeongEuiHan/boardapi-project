@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
+import io.jsonwebtoken.security.SecurityException;
 import org.springframework.data.domain.*;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
@@ -243,6 +244,8 @@ class BoardServiceTest {
         when(board.getUser()).thenReturn(owner);
         when(owner.getLoginId()).thenReturn(loginId);
 
+        when(board.getId()).thenReturn(boardId);
+
         when(newImage.isEmpty()).thenReturn(false);
         when(board.getUploadImage()).thenReturn(oldImage);
         when(uploadImageService.saveImage(newImage, board)).thenReturn(savedImage);
@@ -258,4 +261,5 @@ class BoardServiceTest {
         verify(board).setUploadImage(savedImage);
         verify(board).update(request);
     }
+    
 }

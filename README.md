@@ -154,12 +154,12 @@ boardapi/
 
 **결과**
 - 인증 여부와 권한 상태를 명확히 구분 가능
-  
-![JWT 인증 전](docs/screenshots/auth-before.PNG)
 
-- JWT 인증 후 요청 → **200 OK**
-  
-![JWT 인증 후](docs/screenshots/auth-after.PNG)
+- Authorization 헤더 없이 요청 → 401 Unauthorized  
+![Authorization 없음](docs/screenshots/auth-before.PNG)
+
+- Authorization 헤더(JWT) 포함 요청 → 200 OK 
+![Authorization 포함](docs/screenshots/auth-after.PNG)
 
 ---
 

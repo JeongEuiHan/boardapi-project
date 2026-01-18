@@ -155,11 +155,11 @@ boardapi/
 **결과**
 - 인증 여부와 권한 상태를 명확히 구분 가능
   
-![JWT 인증 전](docs/screenshots/auth-before.png)
+![JWT 인증 전](docs/screenshots/auth-before.PNG)
 
 - JWT 인증 후 요청 → **200 OK**
   
-![JWT 인증 후](docs/screenshots/auth-after.png)
+![JWT 인증 후](docs/screenshots/auth-after.PNG)
 
 ---
 
@@ -178,7 +178,7 @@ boardapi/
 - SILVER 사용자가 GOLD 게시판 작성 시 → **403 Forbidden**
 - 클라이언트 조작과 무관하게 서버에서 정책 강제
   
-![GOLD 게시판 권한 차단](docs/screenshots/forbidden-gold.png)
+![GOLD 게시판 권한 차단](docs/screenshots/forbidden-gold.PNG)
 
 ### 3. 좋아요 중복 처리 문제
 

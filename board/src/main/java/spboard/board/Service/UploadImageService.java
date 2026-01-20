@@ -38,12 +38,12 @@ public class UploadImageService {
     }
 
     public UploadImage saveImage(MultipartFile multipartFile, Board board) throws IOException {
-        // ✅ null/empty 방어 (500 방지)
+        // null/empty 방어 (500 방지)
         if (multipartFile == null || multipartFile.isEmpty()) {
             return null;
         }
 
-        // ✅ 디렉토리 생성 (500 방지)
+        // 디렉토리 생성 (500 방지)
         File dir = new File(fileDir);
         if (!dir.exists()) dir.mkdirs();
 

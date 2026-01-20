@@ -91,7 +91,7 @@ public class SecurityConfig {
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(List.of("*"));
 
-        // ✅ JWT를 Authorization 헤더로만 쓰면 보통 false 권장
+        // JWT를 Authorization 헤더로만 쓰면 보통 false 권장
         config.setAllowCredentials(false);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

@@ -28,7 +28,7 @@ public class AuthApiController {
 
         User user = userRepository.findByLoginId(req.loginId()).orElseThrow();
 
-        // 네 기존 로직 유지: BLACKLIST면 막기
+        // BLACKLIST면 막기
         if (user.getUserRole() == UserRole.BLACKLIST) {
             return ResponseEntity.status(403).body(new LoginResponse(false, null, "BLACKLIST"));
         }

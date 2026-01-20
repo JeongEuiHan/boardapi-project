@@ -207,7 +207,6 @@ public class BoardApiController {
         return ResponseEntity.ok(Map.of("id", deletedBoardId));
     }
 
-    // 이미지 API는 그대로 둬도 OK (다만 /api/boards/images 보다 /api/images가 더 리소스스럽긴 함)
     @GetMapping("/images/{filename}")
     public Resource showImage(@PathVariable String filename) throws MalformedURLException {
         return new UrlResource("file:" + uploadImageService.getFullPath(filename));

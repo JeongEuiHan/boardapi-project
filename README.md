@@ -131,7 +131,7 @@ boardapi/
 ## 🗂 ERD
 
 <p align="center">
-  <img src="./docs/screenshots/erd.svg" width="800" alt="ERD Diagram">
+  <img src="./docs/screenshots/erderd4.svg" width="800" alt="ERD Diagram">
 </p>
 
 - User ↔ Board ↔ Like 연관관계

@@ -11,19 +11,12 @@
         <div th:text="'작성일 : ' + ${#temporals.format(boardDto.createdAt, 'yy/MM/dd HH:mm')}"></div>
         <div th:text="'최근 수정일 : ' + ${#temporals.format(boardDto.lastModifiedAt, 'yy/MM/dd HH:mm')}"></div>
         <br/>
-        <div sec:authorize="isAuthenticated()">
-          <div th:if="${likeCheck == false}" style="font-size: large">
-            <button class="btn icon-btn" type="button"
-                    th:onclick="|location.href='@{/likes/add/{boardId} (boardId=${boardDto.id})}'|">
-              <img class="small-img" src="/images/empty-hearts.svg">
-            </button>[[${boardDto.likeCnt}]]
-          </div>
-          <div th:unless="${likeCheck == false}" style="font-size: large">
-            <button class="btn icon-btn" type="button"
-                    onclick="deleteLike()">
-              <img class="small-img" src="/images/fill-hearts.svg">
-            </button>[[${boardDto.likeCnt}]]
-          </div>
+        <div sec:authorize="isAuthenticated()" style="font-size: large">
+          <button class="btn icon-btn" type="button" onclick="clickLike()">
+            <img id="heartIcon" class="small-img"
+                 th:src="${likeCheck == false} ? '/images/empty-hearts.svg' : '/images/fill-hearts.svg'">
+          </button>
+          <span id="likeCountText">[[${boardDto.likeCnt}]]</span>
         </div>
         <div sec:authorize="isAnonymous()">
           <div style="font-size: large">
@@ -181,6 +174,41 @@
           $("#newImage").val("");
      }
   }
+
+  async function clickLike() {
+    const boardId = [[${boardDto.id}]]; // 타임리프 변수 활용
+    const heartIcon = document.getElementById('heartIcon');
+    const likeCountText = document.getElementById('likeCountText');
+
+    try {
+        const response = await fetch(`/api/likes/${boardId}`, {
+            method: 'POST',
+            headers: {
+                // 스프링 시큐리티를 쓴다면 CSRF 토큰이 필요할 수 있습니다.
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.status === 401) {
+            if (confirm("로그인이 필요한 작업입니다.\n로그인 하시겠습니까?")) {
+                location.href = "/users/login";
+            }
+            return;
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+            // 하트 이미지 바꾸기
+            heartIcon.src = data.isLiked ? '/images/fill-hearts.svg' : '/images/empty-hearts.svg';
+            // 숫자 바꾸기
+            likeCountText.innerText = data.likeCnt;
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        alert("좋아요 처리 중 오류가 발생했습니다.");
+    }
+}
 </script>
 </body>
 </html>

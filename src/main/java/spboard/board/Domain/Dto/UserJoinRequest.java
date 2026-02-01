@@ -1,8 +1,8 @@
-package spboard.board.Req;
+package spboard.board.Domain.Dto;
 
 import lombok.Data;
-import spboard.board.Domain.User;
-import spboard.board.Domain.UserRole;
+import spboard.board.Domain.entity.User;
+import spboard.board.Domain.enum_class.UserRole;
 
 import java.time.LocalDateTime;
 

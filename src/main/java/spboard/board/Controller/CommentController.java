@@ -5,7 +5,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import spboard.board.Req.CommentCreateRequest;
+import spboard.board.Domain.Dto.CommentCreateRequest;
 import spboard.board.Service.BoardService;
 import spboard.board.Service.CommentService;
 

@@ -2,20 +2,25 @@ package spboard.board.Service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import spboard.board.Domain.*;
-import spboard.board.Dto.BoardCntDto;
-import spboard.board.Dto.BoardDto;
-import spboard.board.Repository.BoardRepository;
-import spboard.board.Repository.CommentRepository;
-import spboard.board.Repository.LikeRepository;
-import spboard.board.Repository.UserRepository;
-import spboard.board.Req.BoardCreateRequest;
+import spboard.board.Domain.Dto.BoardCntDto;
+import spboard.board.Domain.Dto.BoardDto;
+import spboard.board.Domain.MapperDTO.BoardDeleteMeta;
+import spboard.board.Domain.entity.*;
+import spboard.board.Domain.enum_class.BoardCategory;
+import spboard.board.Domain.enum_class.UserRole;
+import spboard.board.Domain.mybati.BoardMapper;
+import spboard.board.Domain.mybati.CommentMapper;
+import spboard.board.Domain.mybati.LikeMapper;
+import spboard.board.Domain.mybati.UserMapper;
+import spboard.board.Domain.Dto.BoardCreateRequest;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -25,29 +30,53 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class BoardService {
 
-    private final BoardRepository boardRepository;
-    private final UserRepository userRepository;
-    private final LikeRepository likeRepository;
-    private final CommentRepository commentRepository;
     private final UploadImageService uploadImageService;
+    private final BoardMapper boardMapper;
+    private final UserMapper userMapper;
 
     public Page<Board> getBoardList(BoardCategory category, PageRequest pageRequest, String searchType, String keyword) {
-        if (searchType != null && keyword != null) {
-            if (searchType.equals("title")) {
-                return boardRepository.findAllByCategoryAndTitleContainsAndUser_UserRoleNot(category, keyword, UserRole.ADMIN, pageRequest);
-            } else {
-                return boardRepository.findAllByCategoryAndUserNicknameContainsAndUser_UserRoleNot(category, keyword, UserRole.ADMIN, pageRequest);
-            }
+        int offset = (int)pageRequest.getOffset();
+        int limit = pageRequest.getPageSize();
+
+        // 1. 정렬 조건 추출 (Sort 객체 활용)
+        // 기본값은 id로 설정하고, PageRequest에 담긴 첫 번째 정렬 조건을 꺼냄
+        String orderBy = "id";
+        if (pageRequest.getSort().isSorted()) {
+            String sortProperty = pageRequest.getSort().iterator().next().getProperty();
+            // 자바 필드명 -> db 컬럼명 매핑
+            if ("createdAt".equals(sortProperty)) orderBy = "created_at";
+            else if ("likeCnt".equals(sortProperty)) orderBy = "like_cnt";
+            else if ("commentCnt".equals(sortProperty)) orderBy = "comment_cnt";
+
         }
-        return boardRepository.findAllByCategoryAndUser_UserRoleNot(category, UserRole.ADMIN, pageRequest);
+        boolean hasSearch = (searchType != null && keyword != null && !keyword.isBlank());
+
+        List<Board> content = boardMapper.findPageByCategoryExcludeRole(
+                category,
+                UserRole.ADMIN,
+                hasSearch ? searchType : null,
+                hasSearch ? keyword : null,
+                orderBy,
+                offset,
+                limit
+        );
+
+        long total = boardMapper.countPageByCategoryExcludeRole(
+                category,
+                UserRole.ADMIN,
+                hasSearch ? searchType : null,
+                hasSearch ? keyword : null
+        );
+
+        return new PageImpl<>(content, pageRequest, total);
     }
 
     public List<Board> getNotice(BoardCategory category) {
-        return boardRepository.findAllByCategoryAndUser_UserRole(category, UserRole.ADMIN);
+        return boardMapper.findAllByCategoryAndUserRole(category, UserRole.ADMIN);
     }
 
     public BoardDto getBoard(Long boardId, String category) {
-        Optional<Board> optBoard = boardRepository.findById(boardId);
+        Optional<Board> optBoard = boardMapper.findById(boardId);
 
         // id에 해당하는 게시글이 없거나 카테고리가 일치하지 않으면 null return 대문자 소문자 무시
         if (optBoard.isEmpty() || !optBoard.get().getCategory().toString().equalsIgnoreCase(category)){
@@ -59,104 +88,112 @@ public class BoardService {
 
     @Transactional
     public Long writeBoard(BoardCreateRequest request, BoardCategory category, String loginId, Authentication auth) throws IOException {
-        User loginUser = userRepository.findByLoginId(loginId).get();
+        User loginUser = userMapper.findByLoginId(loginId)
+                .orElseThrow(() -> new IllegalArgumentException("user not found"));
 
-        Board savedBoard = boardRepository.save(request.toEntity(category, loginUser));
+        Board board = request.toEntity(category, loginUser);
+        board.setCreatedAt(LocalDateTime.now());
+        board.setLastModifiedAt(LocalDateTime.now());
+        boardMapper.insert(board);
 
-        UploadImage uploadImage = uploadImageService.saveImage(request.getUploadImage(), savedBoard);
+
+        UploadImage uploadImage = uploadImageService.saveImage(request.getUploadImage(), board);
         if (uploadImage != null) {
-            savedBoard.setUploadImage(uploadImage);
+            boardMapper.updateUploadImageId(board.getId(), uploadImage.getId());
         }
 
         if (category.equals(BoardCategory.GREETING)) {
-            loginUser.rankUp(UserRole.SILVER, auth);
+            userMapper.updateRole(loginUser.getId(), UserRole.SILVER);
         }
 
-        return savedBoard.getId();
+        return board.getId();
     }
 
     @Transactional
     public Long editBoard(Long boardId, String category, BoardDto dto) throws IOException {
-        Optional<Board> optBoard = boardRepository.findById(boardId);
+        Board board = boardMapper.findById(boardId)
+                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
         // id에 해당하는 게시글이 없거나 카테고리가 일치하지 않으면 null return
-        if (optBoard.isEmpty() || !optBoard.get().getCategory().toString().equalsIgnoreCase(category)) {
+        if(!board.getCategory().toString().equalsIgnoreCase(category)) {
             return null;
         }
 
-        Board board = optBoard.get();
-        // 게시글에 이미지가 있었으면 삭제
-        if(board.getUploadImage() != null) {
-            uploadImageService.deleteImage(board.getUploadImage());
-            board.setUploadImage(null);
+        // 1. 새로운 이미지 파일이 전송되었는지 확인
+        if (dto.getNewImage() != null && !dto.getNewImage().isEmpty()) {
+
+            // 게시글에 이미지가 있었으면 삭제
+            if (board.getUploadImage() != null) {
+
+                boardMapper.updateUploadImageId(boardId, null);
+
+                uploadImageService.deleteImage(board.getUploadImage());
+            }
         }
 
         UploadImage uploadImage = uploadImageService.saveImage(dto.getNewImage(), board);
         if (uploadImage != null) {
-            board.setUploadImage(uploadImage);
+            boardMapper.updateUploadImageId(boardId, uploadImage.getId());
         }
-        board.update(dto);
+
+        boardMapper.updateContent(board.getId(), dto.getTitle(), dto.getBody(), LocalDateTime.now());
 
         return board.getId();
     }
 
     @Transactional
     public Long deleteBoard(Long boardId, String category)  {
-        Optional<Board> optBoard = boardRepository.findById(boardId);
 
-        // id에 해당하는 게시글이 없거나 카테고리가 일치하지 않으면 null retrun
-        if (optBoard.isEmpty() || !optBoard.get().getCategory().toString().equalsIgnoreCase(category)) {
+        BoardCategory reqCategory = BoardCategory.of(category);
+        if(reqCategory == null) return null;
+
+        BoardDeleteMeta meta = boardMapper.findDeleteMetaById(boardId).orElse(null);
+
+        if (meta == null || meta.category() != reqCategory){
             return null;
         }
 
-        Board board = optBoard.get();
-        User boardUser = optBoard.get().getUser();
-        boardUser.likeChange(boardUser.getReceivedLikeCnt() - optBoard.get().getLikeCnt());
-        if (board.getUploadImage() != null) {
-            board.setUploadImage(null);
+        if (meta.uploadImageId() != null) {
+            boardMapper.updateUploadImageId(boardId, null);
         }
-        boardRepository.deleteById(boardId);
+
+        userMapper.decreaseReceivedLikeCnt(meta.userId(), meta.likeCnt());
+
+        boardMapper.deleteById(boardId);
         return boardId;
     }
 
     public String getCategory(Long boardId) {
-        Board board = boardRepository.findById(boardId).get();
-        return board.getCategory().toString().toLowerCase();
+        Board board = boardMapper.findById(boardId)
+                .orElseThrow(() -> new IllegalArgumentException("board not found"));
+
+        return board.getCategory().name().toLowerCase();
     }
 
     public List<Board> findMyBoard(String category, String loginId) {
-        if (category.equals("board")) {
-            return boardRepository.findAllByUser_LoginId(loginId);
-        } else if (category.equals("like")) {
-            List<Like> likes= likeRepository.findAllByUser_LoginId(loginId);
-            List<Board> boards = new ArrayList<>();
-            for (Like like : likes) {
-                boards.add(like.getBoard());
-            }
-            return boards;
-        } else if (category.equals("comment")) {
-            List <Comment> comments = commentRepository.findAllByUser_LoginId(loginId);
-            List<Board> boards = new ArrayList<>();
-            HashSet<Long> commentIds = new HashSet<>();
-
-            for (Comment comment : comments) {
-                if(!commentIds.contains(comment.getBoard().getId())) {
-                    boards.add(comment.getBoard());
-                    commentIds.add(comment.getBoard().getId());
-                }
-            }
-            return boards;
+        if ("board".equals(category)) {
+            return boardMapper.findAllByUserLoginId(loginId);
+        } else if ("like".equals(category)) {
+            return boardMapper.findBoardsLikedByUser(loginId);
+        } else if ("comment".equals(category)) {
+            return boardMapper.findBoardsCommentByUser(loginId);
         }
-        return null;
+        return new ArrayList<>();
     }
 
     public BoardCntDto getBoardCnt(){
         return BoardCntDto.builder()
-                .totalBoardCnt(boardRepository.count())
-                .totalNoticeCnt(boardRepository.countAllByUser_UserRole(UserRole.ADMIN))
-                .totalGreetingCnt(boardRepository.countAllByCategoryAndUser_UserRoleNot(BoardCategory.GREETING, UserRole.ADMIN))
-                .totalFreeCnt(boardRepository.countAllByCategoryAndUser_UserRoleNot(BoardCategory.FREE, UserRole.ADMIN))
-                .totalGoldCnt(boardRepository.countAllByCategoryAndUser_UserRoleNot(BoardCategory.GOLD, UserRole.ADMIN))
+                .totalBoardCnt(boardMapper.countBoard())
+                .totalNoticeCnt(boardMapper.countAllByUserRole(UserRole.ADMIN))
+                .totalGreetingCnt(boardMapper.countAllByCategoryExcludeRole(BoardCategory.GREETING, UserRole.ADMIN))
+                .totalFreeCnt(boardMapper.countAllByCategoryExcludeRole(BoardCategory.FREE, UserRole.ADMIN))
+                .totalGoldCnt(boardMapper.countAllByCategoryExcludeRole(BoardCategory.GOLD, UserRole.ADMIN))
                 .build();
     }
+
+    public int getLikeCount(Long boardId) {
+        return boardMapper.getLikeCount(boardId);
+    }
+
+
 }

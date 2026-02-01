@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>정보 수정</title>
+    <style>
+        .field-error {
+            color: #dc3545;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; }
+        input { width: 100%; padding: 8px; box-sizing: border-box; }
+        button { padding: 10px 20px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<h2>회원 정보 수정</h2>
+
+<form th:action="@{/users/edit}" th:object="${userDto}" method="post">
+
+    <div class="form-group">
+        <label th:for="nowPassword">현재 비밀번호</label>
+        <input type="password" th:field="*{nowPassword}" placeholder="현재 비밀번호를 입력하세요">
+        <div class="field-error" th:if="${#fields.hasErrors('nowPassword')}" th:errors="*{nowPassword}"></div>
+    </div>
+
+    <hr>
+
+    <div class="form-group">
+        <label th:for="newPassword">새 비밀번호 (변경 시에만 입력)</label>
+        <input type="password" th:field="*{newPassword}" placeholder="새 비밀번호">
+        <div class="field-error" th:if="${#fields.hasErrors('newPassword')}" th:errors="*{newPassword}"></div>
+    </div>
+
+    <div class="form-group">
+        <label th:for="newPasswordCheck">새 비밀번호 확인</label>
+        <input type="password" th:field="*{newPasswordCheck}" placeholder="새 비밀번호 다시 입력">
+        <div class="field-error" th:if="${#fields.hasErrors('newPasswordCheck')}" th:errors="*{newPasswordCheck}"></div>
+    </div>
+
+    <hr>
+
+    <div class="form-group">
+        <label th:for="nickname">닉네임</label>
+        <input type="text" th:field="*{nickname}">
+        <div class="field-error" th:if="${#fields.hasErrors('nickname')}" th:errors="*{nickname}"></div>
+    </div>
+
+    <div style="margin-top: 20px;">
+        <button type="submit">수정 완료</button>
+        <a th:href="@{/users/myPage/board}"><button type="button">취소</button></a>
+    </div>
+</form>
+
+</body>
+</html>

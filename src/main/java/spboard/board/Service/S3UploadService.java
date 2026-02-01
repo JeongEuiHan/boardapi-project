@@ -2,13 +2,11 @@ package spboard.board.Service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.util.UriUtils;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
@@ -17,13 +15,12 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
-import spboard.board.Domain.Board;
-import spboard.board.Domain.UploadImage;
-import spboard.board.Repository.BoardRepository;
-import spboard.board.Repository.UploadImageRepository;
+import spboard.board.Domain.entity.Board;
+import spboard.board.Domain.entity.UploadImage;
+import spboard.board.Domain.mybati.BoardMapper;
+import spboard.board.Domain.mybati.UploadImageMapper;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.UUID;
 
@@ -33,8 +30,8 @@ public class S3UploadService {
 
     private final S3Client s3Client;
     private final S3Presigner s3Presigner;
-    private final UploadImageRepository uploadImageRepository;
-    private final BoardRepository boardRepository;
+    private final UploadImageMapper uploadImageMapper;
+    private final BoardMapper boardMapper;
 
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
@@ -65,13 +62,20 @@ public class S3UploadService {
                )
        );
 
-        return uploadImageRepository.save(
-                UploadImage.builder()
-                        .originalFilename(originalFilename)
-                        .savedFilename(savedFilename)
-                        .board(board)
-                        .build()
-        );
+       // 객체 생성
+       UploadImage uploadImage = UploadImage.builder()
+               .originalFilename(originalFilename)
+               .savedFilename(savedFilename)
+               .build();
+
+       // db 저장
+        uploadImageMapper.insert(uploadImage);
+
+        // board와 image 연결 (1:1 관계 업데이트)
+        board.setUploadImage(uploadImage);
+        boardMapper.updateUploadImageId(board.getId(), uploadImage.getId());
+
+        return uploadImage;
 
     }
 
@@ -83,8 +87,10 @@ public class S3UploadService {
 
     public ResponseEntity<Void> downloadImage(Long boardId) {
         // boardId에 해당하는 게시글이 없으면 null return
-        Board board = boardRepository.findById(boardId)
-                .orElseThrow(() -> new IllegalArgumentException("게시글 없음"));
+        Board board = boardMapper.findById(boardId).get();
+        if (board == null) {
+            throw  new IllegalArgumentException("게시글 없음");
+        }
 
 
         UploadImage image = board.getUploadImage();
@@ -118,7 +124,7 @@ public class S3UploadService {
 
     @Transactional
     public void deleteImage(UploadImage uploadImage) {
-        uploadImageRepository.delete(uploadImage);
+        uploadImageMapper.deleteById(uploadImage.getId());
 
         DeleteObjectRequest request = DeleteObjectRequest.builder()
                 .bucket(bucket)

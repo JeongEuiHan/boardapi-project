@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="spboard.board.Domain.mybati.BoardMapper">
+
+    <resultMap id="BoardResultMap" type="spboard.board.Domain.entity.Board">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="body" column="body"/>
+        <result property="category" column="category"/>
+        <result property="likeCnt" column="like_cnt"/>
+        <result property="commentCnt" column="comment_cnt"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="lastModifiedAt" column="last_modified_at"/>
+
+        <association property="user" javaType="spboard.board.Domain.entity.User">
+            <id property="id" column="user_id"/>
+            <result property="loginId" column="login_id"/>
+            <result property="nickname" column="nickname"/>
+            <result property="status" column="user_status"/>
+        </association>
+        
+        <association property="uploadImage" javaType="spboard.board.Domain.entity.UploadImage">
+            <id property="id" column="upload_image_id"/>
+            <result property="savedFilename" column="saved_filename"/>
+            <result property="originalFilename" column="original_filename"/>
+        </association>
+
+    </resultMap>
+
+    <select id="findPageByCategoryExcludeRole" resultMap="BoardResultMap">
+        SELECT
+            b.id, b.title, b.body, b.category, b.like_cnt, b.comment_cnt, b.created_at, b.last_modified_at,
+            u.id AS user_id,
+            u.login_id AS login_id,
+            u.nickname AS nickname
+        FROM todo.`board` b
+        JOIN todo.`user` u ON u.id = b.user_id
+        WHERE b.category = #{category}
+            AND u.user_role != #{excludeRole}
+            AND u.status = 'ACTIVE'
+        <if test="searchType != null and keyword != null and keyword != ''">
+            <choose>
+                <when test="searchType == 'title'">
+                    AND b.title LIKE CONCAT('%', #{keyword}, '%')
+                </when>
+                <when test="searchType == 'nickname'">
+                    And u.nickname LIKE CONCAT('%', #{keyword}, '%')
+                </when>
+            </choose>
+        </if>
+
+        ORDER BY ${orderBy} DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countPageByCategoryExcludeRole" resultType="long">
+        SELECT COUNT(*)
+        FROM todo.`board` b
+        JOIN todo.`user` u ON u.id = b.user_id
+        WHERE category = #{category}
+            AND u.user_role != #{excludeRole}
+            AND u.status = 'ACTIVE'
+        <if test="searchType != null and keyword != null and keyword != ''">
+            <choose>
+                <when test="searchType == 'title'">
+                    AND b.title LIKE CONCAT('%', #{keyword}, '%')
+                </when>
+                <when test="searchType == 'nickname'">
+                    And u.nickname LIKE CONCAT('%', #{keyword}, '%')
+                </when>
+            </choose>
+        </if>
+    </select>
+
+    <select id="findById" resultMap="BoardResultMap">
+        SELECT b.id, b.title, b.body, b.category, b.like_cnt, b.comment_cnt, i.id AS upload_image_id,
+        b.created_at, b.last_modified_at,
+        i.saved_filename,
+        i.original_filename,
+        u.id AS user_id, u.login_id AS login_id, u.nickname AS nickname
+        FROM todo.`board` b
+        LEFT JOIN todo.`user` u ON b.user_id = u.id
+        LEFT JOIN todo.`upload_image` i ON b.upload_image_id = i.id
+        WHERE b.id = #{id}
+            AND u.status = 'ACTIVE'
+        LIMIT 1
+    </select>
+
+    <select id="findAllByCategoryAndUserRole" resultMap="BoardResultMap">
+        SELECT b.id, b.title, b.body, b.category, b.like_cnt, b.comment_cnt, b.created_at, b.last_modified_at,
+        u.nickname AS nickname
+        FROM todo.`board` b
+        JOIN todo.`user` u ON u.id = b.user_id
+        WHERE b.category = #{category}
+            And u.user_role = #{userRole}
+            AND u.status = 'ACTIVE'
+        ORDER BY b.id DESC
+    </select>
+
+    <select id="countAllByUserRole" resultType="long">
+        SELECT COUNT(*)
+        FROM todo.`board` b
+        JOIN todo.`user` u ON u.id = b.user_id
+        WHERE u.user_role = #{userRole}
+    </select>
+
+    <select id="countAllByCategoryExcludeRole" resultType="long">
+        SELECT COUNT(*)
+        FROM todo.`board` b
+        JOIN todo.`user` u ON u.id = b.user_id
+        WHERE b.category = #{category}
+            AND u.user_role != #{excludeRole}
+    </select>
+
+    <insert id="insert" parameterType="spboard.board.Domain.entity.Board"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO todo.`board`
+        (title, body, category, user_id, like_cnt, comment_cnt, created_at, last_modified_at)
+        VALUES
+        (#{title}, #{body}, #{category}, #{user.id}, #{likeCnt}, #{commentCnt},  #{createdAt}, #{lastModifiedAt})
+    </insert>
+
+    <update id="update">
+        UPDATE todo.`board`
+        SET title = #{title},
+            body = #{body},
+            last_modified_at = #{lastModifiedAt}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM todo.`board` WHERE id = #{id}
+    </delete>
+
+    <update id="updateLikeCnt">
+        UPDATE todo.`board` SET like_cnt = #{likeCnt}
+    </update>
+
+    <update id="updateCommentCnt">
+        UPDATE todo.`board` SET comment_cnt = #{commentCnt}
+    </update>
+
+    <update id="updateUploadImageId">
+        UPDATE todo.`board`
+        SET upload_image_id = #{uploadImageId}
+        WHERE id = #{boardId}
+    </update>
+
+    <update id="updateContent">
+        UPDATE todo.`board`
+        SET title = #{title},
+            body = #{body},
+            last_modified_at = #{lastModifiedAt}
+        WHERE id = #{id}
+    </update>
+
+    <select id="findDeleteMetaById" resultType="spboard.board.Domain.MapperDTO.BoardDeleteMeta">
+        SELECT
+            b.id AS boardId,
+            b.category AS category,
+            b.user_id AS userId,
+            b.like_cnt AS likeCnt,
+            b.upload_image_id AS uploadImageId
+        FROM todo.`board` b
+        WHERE b.id = #{id}
+        LIMIT 1
+    </select>
+
+    <select id="findAllByUserLoginId" resultMap="BoardResultMap">
+        SELECT
+            b.id,
+            b.title,
+            b.body,
+            b.category,
+            b.like_cnt,
+            b.comment_cnt,
+            b.created_at,
+            b.last_modified_at,
+            u.nickname AS nickname
+        FROM todo.`board` b
+        JOIN todo.`user` u ON u.id = b.user_id
+        WHERE u.login_id = #{loginId} AND u.status = 'ACTIVE'
+        ORDER BY b.id DESC
+    </select>
+
+    <select id="countBoard" resultType="long">
+        SELECT COUNT(*)
+        FROM todo.`board`
+    </select>
+
+    <update id="incrementCommentCount">
+        UPDATE todo.`board`
+        SET comment_cnt = comment_cnt + 1
+        WHERE id = #{id}
+    </update>
+
+    <update id="decrementCommentCount">
+        UPDATE todo.`board`
+        SET comment_cnt = comment_cnt - 1
+        WHERE id = #{id} AND comment_cnt > 0
+    </update>
+
+    <update id="incrementLikeCount">
+        UPDATE todo.`board`
+        SET like_cnt = like_cnt + 1
+        WHERE id = #{id}
+    </update>
+
+    <update id="decrementLikeCount">
+        UPDATE todo.`board`
+        SET like_cnt = like_cnt -1
+        WHERE id = #{id} AND like_cnt > 0
+    </update>
+
+    <select id="findBoardsLikedByUser" resultMap="BoardResultMap">
+        SELECT b.*,
+        u.nickname AS nickname
+        FROM todo.`board` b
+        JOIN todo.`like` l ON b.id = l.board_id
+        JOIN todo.`user` lu ON lu.id = l.user_id
+        LEFT JOIN todo.`user` u ON b.user_id = u.id
+        WHERE lu.login_id = #{loginId}
+        ORDER BY b.id DESC
+    </select>
+
+    <select id="findBoardsCommentByUser" resultMap="BoardResultMap">
+        SELECT DISTINCT b.*,
+        u.nickname AS nickname
+        FROM todo.`board` b
+        JOIN todo.`comment` c ON c.board_id = b.id
+        JOIN todo.`user` cu ON cu.id = c.user_id
+        LEFT JOIN todo.`user` u ON b.user_id = u.id
+        WHERE cu.login_id = #{loginId}
+        ORDER BY b.id DESC
+    </select>
+
+    <update id="decreaseLikeCountByUser">
+        UPDATE todo.`board` b
+        JOIN todo.`like` l ON b.id = l.board_id
+        JOIN todo.`user` u ON l.user_id = u.id
+        SET b.like_cnt = b.like_cnt - 1
+        WHERE u.login_id = #{loginId} AND b.like_cnt > 0
+    </update>
+
+    <update id="decreaseCommentCountByUser">
+        UPDATE todo.`board`
+        SET comment_cnt = comment_cnt - 1
+        WHERE id IN (
+            SELECT DISTINCT board_id
+            FROM todo.`comment` c
+            JOIN todo.`user` u ON c.user_id = u.id
+            WHERE u.login_id = #{loginId}
+        ) AND comment_cnt > 0
+    </update>
+
+    <select id="getLikeCount" resultType="int">
+        SELECT like_cnt
+        FROM todo.`board`
+        WHERE id = #{boardId}
+    </select>
+
+    <update id="updateLikeCount">
+        UPDATE todo.`board`
+        SET like_cnt = like_cnt + #{amount}
+        WHERE id = #{boardId}
+    </update>
+
+
+</mapper>

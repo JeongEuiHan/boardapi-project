@@ -10,12 +10,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import spboard.board.Domain.BoardCategory;
-import spboard.board.Domain.UploadImage;
-import spboard.board.Dto.BoardDto;
-import spboard.board.Req.BoardCreateRequest;
-import spboard.board.Req.BoardSearchRequest;
-import spboard.board.Req.CommentCreateRequest;
+import spboard.board.Domain.enum_class.BoardCategory;
+import spboard.board.Domain.Dto.BoardDto;
+import spboard.board.Domain.Dto.BoardCreateRequest;
+import spboard.board.Domain.Dto.BoardSearchRequest;
+import spboard.board.Domain.Dto.CommentCreateRequest;
 import spboard.board.Service.BoardService;
 import spboard.board.Service.CommentService;
 import spboard.board.Service.LikeService;
@@ -105,7 +104,7 @@ public class BoardController {
                                   Authentication auth) {
         if (auth != null) {
             model.addAttribute("loginUserLoginId", auth.getName());
-            model.addAttribute("likeCheck", likeService.checkLike(auth.getName(), boardId));
+            model.addAttribute("likeCheck", likeService.existsLike(auth.getName(), boardId));
         }
 
         BoardDto boardDto = boardService.getBoard(boardId, category);

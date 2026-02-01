@@ -7,9 +7,13 @@
     <form class="offset-4 col-4 form-group user-form" th:method="post" th:action="@{/users/join}" th:object="${userJoinRequest}" align="left">
         <div>
             <label th:for="loginId">아이디 (아이디는 변경할 수 없습니다)</label><br/>
-            <input type="text" th:field="*{loginId}" placeholder="아이디를 입력해주세요.(최대 10자)"
-                   th:errorclass="error-input"/>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" th:field="*{loginId}" id="loginId" placeholder="아이디를 입력해주세요.(최대 10자)"
+                       th:errorclass="error-input" style="flex: 1;"/>
+                <button type="button" class="btn btn-secondary" onclick="checkDuplicateId()" style="width: fit-content;">중복 확인</button>
+            </div>
             <div th:if="${#fields.hasErrors('loginId')}" th:class="error-div" th:errors="*{loginId}"/>
+            <div id="idCheckMsg" style="font-size: 0.9em; margin-top: 5px;"></div>
         </div>
         <br/>
         <div>
@@ -38,5 +42,32 @@
         </div>
     </form>
 </div>
+<script th:inline="javascript">
+    async function checkDuplicateId() {
+    const loginId = document.getElementById('loginId').value;
+    const msgArea = document.getElementById('idCheckMsg');
+
+    if (!loginId || loginId.trim() === "") {
+        alert("아이디를 먼저 입력해주세요.");
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/users/check-id?loginId=${loginId}`);
+        const data = await response.json();
+
+        if (data.isAvailable) {
+            msgArea.innerText = "사용 가능한 아이디입니다.";
+            msgArea.style.color = "blue";
+        } else {
+            msgArea.innerText = "이미 사용 중인 아이디입니다.";
+            msgArea.style.color = "red";
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        alert("통신 중 오류가 발생했습니다.");
+    }
+}
+</script>
 </body>
 </html>

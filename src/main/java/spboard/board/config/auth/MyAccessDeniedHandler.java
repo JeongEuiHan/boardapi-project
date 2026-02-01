@@ -1,6 +1,5 @@
 package spboard.board.config.auth;
 
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
@@ -8,24 +7,23 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.access.AccessDeniedHandler;
-import spboard.board.Domain.User;
-import spboard.board.Domain.UserRole;
-import spboard.board.Repository.UserRepository;
+import spboard.board.Domain.entity.User;
+import spboard.board.Domain.enum_class.UserRole;
+import spboard.board.Domain.mybati.UserMapper;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 
 @AllArgsConstructor
 public class MyAccessDeniedHandler implements AccessDeniedHandler {
-
-    private final UserRepository userRepository;
+    private final UserMapper userMapper;
     @Override
     public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) throws IOException {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication(); // 현재 로그인한 사용자 정보를 가져오는 방법
         User loginUser = null;
         if (auth != null) {
-           loginUser = userRepository.findByLoginId(auth.getName()).get();
+           loginUser = userMapper.findByLoginId(auth.getName()).get();
         }
         String requestURI = request.getRequestURI();
 

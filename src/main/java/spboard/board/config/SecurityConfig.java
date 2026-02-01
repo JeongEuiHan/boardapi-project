@@ -8,7 +8,7 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
-import spboard.board.Repository.UserRepository;
+import spboard.board.Domain.mybati.UserMapper;
 import spboard.board.config.auth.MyAccessDeniedHandler;
 import spboard.board.config.auth.MyAuthenticationEntryPoint;
 import spboard.board.config.auth.MyLoginSuccessHandler;
@@ -18,7 +18,7 @@ import spboard.board.config.auth.MyLogoutSuccessHandler;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-    private final UserRepository userRepository;
+    private final UserMapper userMapper;
 
     // 로그인하지 않은 유저들만 접근 가능한 URL
     private static final String[] anonymousUserUrl = {
@@ -62,7 +62,7 @@ public class SecurityConfig {
                         .usernameParameter("loginId")
                         .passwordParameter("password")
                         .failureUrl("/users/login?fail")
-                        .successHandler(new MyLoginSuccessHandler(userRepository))
+                        .successHandler(new MyLoginSuccessHandler(userMapper))
                 )
                 // 로그아웃
                 .logout(logout -> logout
@@ -73,7 +73,7 @@ public class SecurityConfig {
                 )
                 // 인증/인가 예외 처리
                 .exceptionHandling(ex -> ex
-                        .accessDeniedHandler(new MyAccessDeniedHandler(userRepository))
+                        .accessDeniedHandler(new MyAccessDeniedHandler(userMapper))
                         .authenticationEntryPoint(new MyAuthenticationEntryPoint())
                 );
 

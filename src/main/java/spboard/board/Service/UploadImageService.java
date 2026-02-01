@@ -8,10 +8,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriUtils;
-import spboard.board.Domain.Board;
-import spboard.board.Domain.UploadImage;
-import spboard.board.Repository.BoardRepository;
-import spboard.board.Repository.UploadImageRepository;
+import spboard.board.Domain.entity.Board;
+import spboard.board.Domain.entity.UploadImage;
+import spboard.board.Domain.mybati.BoardMapper;
+import spboard.board.Domain.mybati.UploadImageMapper;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,8 +25,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UploadImageService {
 
-    private final UploadImageRepository uploadImageRepository;
-    private final BoardRepository boardRepository;
+    private final UploadImageMapper uploadImageMapper;
+    private final BoardMapper boardMapper;
     private final String rootPath = System.getProperty("user.dir"); // 현재 프로젝트의 루트 경로
     private final String fileDir = rootPath + "/src/main/resources/static/upload-images/"; // 이미지 파일이 실제로 저장될 서버 내부 경로
 
@@ -47,16 +47,19 @@ public class UploadImageService {
         // 파일 저장
         multipartFile.transferTo(new File(getFullPath(savedFilename)));
 
-        return uploadImageRepository.save(UploadImage.builder()
+        UploadImage uploadImage = UploadImage.builder()
                 .originalFilename(originalFilename)
                 .savedFilename(savedFilename)
-                .board(board)
-                .build());
+                .build();
+
+        uploadImageMapper.insert(uploadImage);
+
+        return uploadImage;
     }
 
     @Transactional
     public void deleteImage(UploadImage uploadImage) throws IOException {
-        uploadImageRepository.delete(uploadImage);
+        uploadImageMapper.deleteById(uploadImage.getId());
         Files.deleteIfExists(Paths.get(getFullPath(uploadImage.getSavedFilename())));
     }
 
@@ -68,12 +71,14 @@ public class UploadImageService {
 
     public ResponseEntity<UrlResource> downloadImage(Long boardId) throws MalformedURLException {
         // boardId에 해당하는 게시글이 없으면 null return
-        Board board = boardRepository.findById(boardId).get();
+        Board board = boardMapper.findById(boardId)
+                .orElseThrow(() -> new IllegalArgumentException("board not found"));
+
         if (board == null || board.getUploadImage() == null) {
-            return null;
+            return ResponseEntity.notFound().build();
         }
 
-        UrlResource urlResource = new UrlResource("file" + getFullPath(board.getUploadImage().getSavedFilename())); // 서버에 저장된 실제 파일을 가리키는 객체 생성
+        UrlResource urlResource = new UrlResource("file:" + getFullPath(board.getUploadImage().getSavedFilename())); // 서버에 저장된 실제 파일을 가리키는 객체 생성
 
         // 업로드 한 파일명이 한글인 경우 아래 작업을 안해주면 한글이 깨질 수 있음
         String encodedUploadFileName = UriUtils.encode(board.getUploadImage().getOriginalFilename(), StandardCharsets.UTF_8);

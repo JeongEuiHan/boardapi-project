@@ -1,8 +1,8 @@
-package spboard.board.Dto;
+package spboard.board.Domain.Dto;
 
 import lombok.Builder;
 import lombok.Data;
-import spboard.board.Domain.User;
+import spboard.board.Domain.entity.User;
 
 @Data
 @Builder

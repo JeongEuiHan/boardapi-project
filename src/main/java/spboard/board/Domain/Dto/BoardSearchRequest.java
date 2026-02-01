@@ -1,4 +1,4 @@
-package spboard.board.Req;
+package spboard.board.Domain.Dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

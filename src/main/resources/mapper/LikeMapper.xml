@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="spboard.board.Domain.mybati.LikeMapper">
+    <resultMap id="LikeResultMap" type="spboard.board.Domain.entity.Like">
+        <id property="id" column="id"/>
+        <association property="user" javaType="spboard.board.Domain.entity.User">
+            <id property="id" column="user_id"/>
+            <result property="loginId" column="login_id"/>
+            <result property="nickname" column="nickname"/>
+        </association>
+
+        <association property="board" javaType="spboard.board.Domain.entity.Board">
+            <id property="id" column="board_id"/>
+        </association>
+    </resultMap>
+
+    <insert id="insert" parameterType="spboard.board.Domain.entity.Like">
+        INSERT INTO todo.`like`
+        (user_id, board_id)
+        VALUES
+        (#{userId}, #{boardId})
+    </insert>
+
+    <delete id="deleteByUserLoginIdAndBoardId">
+        DELETE l
+        FROM todo.`like` l
+        JOIN todo.`user` u ON u.id = l.user_id
+        WHERE u.login_id = #{loginId}
+            AND u.status = 'ACTIVE'
+            AND l.board_id = #{boardId}
+    </delete>
+
+    <select id="existsByUserLoginIdAndBoardId" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1
+            FROM todo.`like` l
+            JOIN todo.`user` u ON u.id = l.user_id
+            WHERE u.login_id = #{loginId}
+                AND u.status = 'ACTIVE'
+                AND l.board_id = #{boardId}
+        )
+    </select>
+
+    <select id="findAllByUserLoginId" resultMap="LikeResultMap">
+        SELECT l.id
+        FROM todo.`like` l
+        JOIN todo.`user` u ON u.id = l.user_id
+        WHERE u.login_id = #{loginId}
+            AND u.status = 'ACTIVE'
+        ORDER by l.id DESC
+    </select>
+
+    <delete id="deleteByLoginId">
+        DELETE FROM todo.`like`
+        WHERE user_id IN (
+        SELECT id
+        FROM todo.`user`
+        WHERE login_id = #{loginId}
+        )
+    </delete>
+
+
+</mapper>

@@ -33,9 +33,9 @@
         <th style="width: 15%" th:text="${user.nickname}"/>
         <th style="width: 10%" th:text="${user.userRole}"/>
         <th style="width: 15%" th:text="${#temporals.format(user.createdAt, 'yy/MM/dd HH:mm')}"/>
-        <th style="width: 10%" th:text="${user.boards.size}"/>
-        <th style="width: 10%" th:text="${user.comments.size}"/>
-        <th style="width: 10%" th:text="${user.likes.size}"/>
+        <th style="width: 10%" th:text="${user.boardCnt}"/>
+        <th style="width: 10%" th:text="${user.commentCnt}"/>
+        <th style="width: 10%" th:text="${user.likeCnt}"/>
         <th style="width: 10%" th:text="${user.receivedLikeCnt}"/>
       </tr>
       </tbody>

@@ -11,9 +11,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import spboard.board.Domain.User;
-import spboard.board.Dto.UserDto;
-import spboard.board.Req.UserJoinRequest;
+import spboard.board.Domain.entity.User;
+import spboard.board.Domain.Dto.UserDto;
+import spboard.board.Domain.Dto.UserJoinRequest;
 import spboard.board.Service.BoardService;
 import spboard.board.Service.UserService;
 

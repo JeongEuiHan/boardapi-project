@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="spboard.board.Domain.mybati.CommentMapper">
+    <resultMap id="CommentResultMap" type="spboard.board.Domain.entity.Comment">
+        <id property="id" column="id"/>
+        <result property="body" column="body"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="lastModifiedAt" column="last_modified_at"/>
+
+        <association property="user" javaType="spboard.board.Domain.entity.User">
+            <id property="id" column="user_id"/>
+            <result property="loginId" column="login_id"/>
+            <result property="nickname" column="nickname"/>
+            <result property="status" column="user_status"/>
+        </association>
+
+        <association property="board" javaType="spboard.board.Domain.entity.Board">
+            <id property="id" column="board_id"/>
+        </association>
+    </resultMap>
+
+    <insert id="insert" parameterType="spboard.board.Domain.entity.Comment"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO todo.`comment`
+        (body, user_id, board_id, created_at, last_modified_at)
+        VALUES
+        (#{body}, #{user.id}, #{board.id}, #{createdAt}, #{lastModifiedAt})
+    </insert>
+
+    <select id="findById" resultMap="CommentResultMap">
+        SELECT c.id, c.body, c.created_at, c.last_modified_at,
+        u.id AS user_id, u.nickname AS nickname, b.id AS board_id
+        FROM todo.`comment` c
+        LEFT JOIN todo.`user` u ON c.user_id = u.id
+        LEFT JOIN todo.`board` b ON c.board_id = b.id
+        WHERE c.id = #{id}
+            AND u.status = 'ACTIVE'
+        LIMIT 1
+    </select>
+
+    <select id="findAllByBoardId" resultMap="CommentResultMap">
+        SELECT c.id, c.body, c.created_at, c.last_modified_at,
+        u.id AS user_id, u.nickname AS nickname, u.login_id AS login_id,
+        b.id AS board_id
+        FROM todo.`comment` c
+        LEFT JOIN todo.`user` u ON c.user_id = u.id
+        LEFT JOIN todo.`board` b ON c.board_id = b.id
+        WHERE c.board_id = #{boardId}
+            AND u.status = 'ACTIVE'
+        ORDER BY id ASC
+    </select>
+
+    <select id="findAllByUserLoginId" resultMap="CommentResultMap">
+        SELECT c.id, c.body, c.created_at, c.last_modified_at
+        FROM todo.`comment` c
+        JOIN todo.`user` u ON u.id = c.user_id
+        WHERE u.login_id = #{loginId}
+            AND u.status = 'ACTIVE'
+        ORDER BY c.id DESC
+    </select>
+
+    <update id="updateBody">
+        UPDATE todo.`comment`
+        SET body = #{body},
+            last_modified_at = #{lastModifiedAt}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM todo.`comment`
+        WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteByLoginId">
+        DELETE FROM todo.`comment`
+        WHERE user_id IN (
+        SELECT id
+        FROM todo.`user`
+        WHERE login_id = #{loginId}
+        )
+    </delete>
+</mapper>

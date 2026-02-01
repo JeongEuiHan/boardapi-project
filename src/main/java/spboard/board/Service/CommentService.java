@@ -3,15 +3,16 @@ package spboard.board.Service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import spboard.board.Domain.Board;
-import spboard.board.Domain.Comment;
-import spboard.board.Domain.User;
-import spboard.board.Domain.UserRole;
-import spboard.board.Repository.BoardRepository;
-import spboard.board.Repository.CommentRepository;
-import spboard.board.Repository.UserRepository;
-import spboard.board.Req.CommentCreateRequest;
+import spboard.board.Domain.entity.Board;
+import spboard.board.Domain.entity.Comment;
+import spboard.board.Domain.entity.User;
+import spboard.board.Domain.enum_class.UserRole;
+import spboard.board.Domain.mybati.BoardMapper;
+import spboard.board.Domain.mybati.CommentMapper;
+import spboard.board.Domain.mybati.UserMapper;
+import spboard.board.Domain.Dto.CommentCreateRequest;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,46 +20,47 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class CommentService {
 
-    private final CommentRepository commentRepository;
-    private final BoardRepository boardRepository;
-    private final UserRepository userRepository;
+    private final CommentMapper commentMapper;
+    private final BoardMapper boardMapper;
+    private final UserMapper userMapper;
 
     public void writeComment(Long boardId, CommentCreateRequest request, String loginId) {
-        Board board = boardRepository.findById(boardId).get();
-        User user = userRepository.findByLoginId(loginId).get();
-        board.commentChange(board.getCommentCnt() + 1);
-        commentRepository.save(request.toEntity(board, user));
+        Board board = boardMapper.findById(boardId).orElseThrow(() -> new IllegalArgumentException("게시판 없음"));
+        User user = userMapper.findByLoginId(loginId).orElseThrow(() -> new IllegalArgumentException(" 유저 없음"));
+
+        boardMapper.incrementCommentCount(boardId);
+
+        commentMapper.insert(request.toEntity(board, user, LocalDateTime.now(), LocalDateTime.now()));
     }
 
-    public List<Comment> findAll(Long boardId) {
-        return commentRepository.findAllByBoardId(boardId);
+    public List<Comment> findAll(Long boardId) { return commentMapper.findAllByBoardId(boardId);
     }
 
     @Transactional
     public Long editComment(Long commentId, String newBody, String loginId) {
-        Optional<Comment> optComment = commentRepository.findById(commentId);
-        Optional<User> optUser = userRepository.findByLoginId(loginId);
-        if (optComment.isEmpty() || optUser.isEmpty() || !optComment.get().getUser().equals(optUser.get())) {
+        Comment comment = commentMapper.findById(commentId).orElseThrow(() -> new IllegalArgumentException("댓글 없음"));
+        User user = userMapper.findByLoginId(loginId).orElseThrow(() -> new IllegalArgumentException("유저 없음"));
+        if (!comment.getUser().getId().equals(user.getId())) {
             return  null;
         }
 
-        Comment comment = optComment.get();
-        comment.update(newBody);
+        commentMapper.updateBody(comment.getId(), newBody, LocalDateTime.now());
 
         return comment.getBoard().getId();
     }
 
     public Long deleteComment(Long commentId, String loginId) {
-        Optional<Comment> optComment = commentRepository.findById(commentId);
-        Optional<User> optUser = userRepository.findByLoginId(loginId);
-        if (optComment.isEmpty() || optUser.isEmpty() || (!optComment.get().getUser().equals(optUser.get()) && !optUser.get().getUserRole().equals(UserRole.ADMIN))) {
+        Comment comment = commentMapper.findById(commentId).orElseThrow(() -> new IllegalArgumentException("댓글 없음"));
+        User user = userMapper.findByLoginId(loginId).orElseThrow(() -> new IllegalArgumentException("유저 없음"));
+        if ((!comment.getUser().getId().equals(user.getId()) && !user.getUserRole().equals(UserRole.ADMIN))) {
             return null;
         }
 
-        Board board = optComment.get().getBoard();
-        board.commentChange(board.getCommentCnt() - 1);
+        Long boardId = comment.getBoard().getId();
 
-        commentRepository.delete(optComment.get());
-        return board.getId();
+        boardMapper.decrementCommentCount(boardId);
+
+        commentMapper.deleteById(commentId);
+        return boardId;
     }
 }

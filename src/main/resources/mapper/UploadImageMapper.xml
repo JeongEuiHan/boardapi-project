@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="spboard.board.Domain.mybati.UploadImageMapper">
+    <resultMap id="UploadImageResultMap" type="spboard.board.Domain.entity.UploadImage">
+        <id property="id" column="id"/>
+        <result property="originalFilename" column="original_filename"/>
+        <result property="savedFilename" column="saved_filename"/>
+
+    </resultMap>
+
+    <insert id="insert" parameterType="spboard.board.Domain.entity.UploadImage"
+    useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO todo.`upload_image`
+        (original_filename, saved_filename)
+        VALUES
+        (#{originalFilename}, #{savedFilename})
+    </insert>
+
+    <select id="findById" resultMap="UploadImageResultMap">
+        SELECT id, original_filename, saved_filename
+        FROM todo.`upload_image`
+        WHERE id = #{id}
+        LIMIT 1
+    </select>
+
+    <delete id="deleteById">
+        DELETE FROM todo.`upload_image`
+        WHERE id = #{id}
+    </delete>
+
+    <select id="findBySavedFilename" resultMap="UploadImageResultMap">
+        SELECT id, original_filename, saved_filename
+        FROM todo.upload_image
+        WHERE saved_filename = #{savedFilename}
+        LIMIT 1
+    </select>
+
+</mapper>

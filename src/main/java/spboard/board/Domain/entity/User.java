@@ -1,47 +1,42 @@
-package spboard.board.Domain;
+package spboard.board.Domain.entity;
 
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import spboard.board.Domain.enum_class.UserRole;
+import spboard.board.Domain.enum_class.UserStatus;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Entity
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 @Getter
+@Setter
 public class User {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String loginId; // 로그인할 때 사용하는 아이디
     private String password; // 비밀번호
     private String nickname; // 닉네임
     private LocalDateTime createdAt; // 가입 시간
     private Integer receivedLikeCnt; // 유저가 받은 좋아요 개수
 
-    @Enumerated(EnumType.STRING)
     private UserRole userRole; // 권한
+    private UserStatus status; // 상태
 
-    @OneToMany(mappedBy = "user", orphanRemoval = true)
-    private List<Board> boards; // 작성글
+    private int boardCnt;
+    private int commentCnt;
+    private int likeCnt;
 
-    @OneToMany(mappedBy = "user", orphanRemoval = true)
-    private List<Like> likes; // 유저가 누른 좋아요
-
-    @OneToMany(mappedBy = "user", orphanRemoval = true)
-    private List<Comment> comments; // 작성글
+    private List<Board> boards;
+    private List<Like> likes;
+    private List<Comment> comments;
 
     public void rankUp(UserRole userRole, Authentication auth) {
         this.userRole = userRole;
@@ -65,11 +60,11 @@ public class User {
         this.nickname = newNickname;
     }
 
-    public void changeRole() {
-        if (userRole.equals(UserRole.BRONZE)) userRole = UserRole.SILVER;
-        else if (userRole.equals(UserRole.SILVER)) userRole = UserRole.GOLD;
-        else if (userRole.equals(UserRole.GOLD)) userRole = UserRole.BLACKLIST;
-        else if (userRole.equals(UserRole.BLACKLIST)) userRole = UserRole.BRONZE;
+    public UserRole changeRole() {
+        if (userRole.equals(UserRole.BRONZE)) return userRole = UserRole.SILVER;
+        else if (userRole.equals(UserRole.SILVER)) return userRole = UserRole.GOLD;
+        else if (userRole.equals(UserRole.GOLD)) return userRole = UserRole.BLACKLIST;
+        return userRole = UserRole.BRONZE;
     }
 
 

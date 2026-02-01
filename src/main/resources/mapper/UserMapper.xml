@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="spboard.board.Domain.mybati.UserMapper">
+    <!-- snake_case -->
+    <resultMap id="UserResultMap" type="spboard.board.Domain.entity.User">
+        <id property="id" column="id"/>
+        <result property="loginId" column="login_id"/>
+        <result property="password" column="password"/>
+        <result property="nickname" column="nickname"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="receivedLikeCnt" column="received_like"/>
+        <result property="userRole" column="user_role"/>
+        <result property="status" column="status"/>
+        <result property="boardCnt" column="board_cnt"/>
+        <result property="commentCnt" column="comment_cnt"/>
+        <result property="likeCnt" column="like_cnt"/>
+    </resultMap>
+
+    <select id="findByLoginId" resultMap="UserResultMap">
+        SELECT id, login_id, password, nickname, created_at, received_like, user_role, status
+        FROM todo.`user`
+        WHERE login_id = #{loginId}
+            AND status = 'ACTIVE'
+        LIMIT 1
+    </select>
+
+    <select id="existsByLoginId" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1 FROM todo.`user` WHERE login_id = #{loginId} AND status = 'ACTIVE'
+        )
+    </select>
+
+    <select id="existsByNickname" resultType="boolean">
+        SELECT EXISTS(
+        SELECT 1 FROM todo.`user` WHERE nickname = #{nickname} AND status = 'ACTIVE'
+        )
+    </select>
+
+    <select id="countAllByUserRole" resultType="long">
+        SELECT COUNT(*)
+        FROM todo.`user`
+        WHERE user_role = #{userRole}
+            AND status = 'ACTIVE'
+    </select>
+
+    <select id="findAllByNicknameContains" resultMap="UserResultMap">
+        SELECT
+            u.*,
+            (SELECT COUNT(*) FROM todo.`board` b WHERE b.user_id = u.id) AS board_cnt,
+            (SELECT COUNT(*) FROM todo.`comment` c WHERE c.user_id = u.id) AS comment_cnt,
+            (SELECT COUNT(*) FROM todo.`like` l WHERE l.user_id = u.id) AS like_cnt
+        FROM todo.`user` u
+        WHERE u.nickname LIKE CONCAT('%', #{nickname}, '%')
+            AND u.status = 'ACTIVE'
+            AND u.user_role != #{userRole}
+        ORDER BY u.id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countAllByNicknameContains" resultType="long">
+        SELECT COUNT(*)
+        FROM todo.`user`
+        WHERE nickname LIKE CONCAT('%', #{nickname}, '%')
+            AND status = 'ACTIVE'
+    </select>
+
+    <insert id="insert" parameterType="spboard.board.Domain.entity.User"
+            useGeneratedKeys="true" keyProperty="id" >
+        INSERT INTO todo.`user`
+        (login_id, password, nickname, created_at, received_like, user_role, status)
+        VALUES
+        (#{loginId}, #{password}, #{nickname}, #{createdAt}, #{receivedLikeCnt}, #{userRole}, 'ACTIVE')
+    </insert>
+
+    <update id="updateProfile">
+        UPDATE todo.`user`
+        SET password = #{password},
+            nickname = #{nickname}
+        WHERE id = #{id}
+            AND status = 'ACTIVE'
+    </update>
+
+    <update id="updateReceivedLikeCnt">
+        UPDATE todo.`user`
+        SET received_like = #{receivedLikeCnt}
+        WHERE id = #{id}
+            AND status = 'ACTIVE'
+    </update>
+
+    <select id="findById" resultMap="UserResultMap">
+        SELECT id, login_id, password, nickname, created_at, received_like, user_role, status
+        FROM todo.`user`
+        WHERE id = #{id}
+            AND status = 'ACTIVE'
+        LIMIT 1
+    </select>
+
+    <update id="updateStatus">
+        UPDATE todo.`user`
+        SET status = #{status}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateRole" >
+        UPDATE todo.`user`
+        SET user_role = #{userRole}
+        WHERE id = #{id}
+    </update>
+    
+    <select id="countActive" resultType="long">
+        SELECT COUNT(*)
+        FROM todo.`user`
+        WHERE status = 'ACTIVE'
+    </select>
+
+    <update id="decreaseReceivedLikeCnt">
+        UPDATE todo.`user`
+        SET received_like = received_like - #{delta}
+        WHERE id = #{userId}
+    </update>
+
+    <update id="incrementReceivedLikeCount">
+        UPDATE todo.`user`
+        SET received_like = received_like + 1
+        WHERE id = #{userId}
+    </update>
+
+    <update id="decrementReceivedLikeCount">
+        UPDATE todo.`user`
+        SET received_like = received_like - 1
+        WHERE id = #{userId} AND received_like > 0
+    </update>
+
+    <select id="countByLoginId" resultType="int">
+        SELECT COUNT(*)
+        FROM todo.`user`
+        WHERE login_id = #{loginId}
+    </select>
+
+</mapper>

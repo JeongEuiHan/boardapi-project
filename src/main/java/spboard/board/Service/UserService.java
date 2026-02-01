@@ -2,22 +2,25 @@ package spboard.board.Service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
-import spboard.board.Domain.Comment;
-import spboard.board.Domain.Like;
-import spboard.board.Domain.User;
-import spboard.board.Domain.UserRole;
-import spboard.board.Dto.UserCntDto;
-import spboard.board.Dto.UserDto;
-import spboard.board.Repository.CommentRepository;
-import spboard.board.Repository.LikeRepository;
-import spboard.board.Repository.UserRepository;
-import spboard.board.Req.UserJoinRequest;
+import spboard.board.Domain.entity.Comment;
+import spboard.board.Domain.entity.Like;
+import spboard.board.Domain.entity.User;
+import spboard.board.Domain.enum_class.UserRole;
+import spboard.board.Domain.Dto.UserCntDto;
+import spboard.board.Domain.Dto.UserDto;
+import spboard.board.Domain.enum_class.UserStatus;
+import spboard.board.Domain.mybati.BoardMapper;
+import spboard.board.Domain.mybati.CommentMapper;
+import spboard.board.Domain.mybati.LikeMapper;
+import spboard.board.Domain.mybati.UserMapper;
+import spboard.board.Domain.Dto.UserJoinRequest;
 
 import java.util.List;
 
@@ -25,10 +28,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserService {
 
-    private final UserRepository userRepository;
-    private final LikeRepository likeRepository;
-    private final CommentRepository commentRepository;
     private final BCryptPasswordEncoder encoder;
+    private final UserMapper userMapper;
+    private final LikeMapper likeMapper;
+    private final CommentMapper commentMapper;
+    private final BoardMapper boardMapper;
 
     public BindingResult joinValid(UserJoinRequest request, BindingResult bindingResult)
     {
@@ -40,7 +44,7 @@ public class UserService {
                     "length.exceeded",
                     "아이디가 10자가 넘습니다."
             );
-        } else if (userRepository.existsByLoginId(request.getLoginId())) {
+        } else if (userMapper.existsByLoginId(request.getLoginId())) {
             bindingResult.rejectValue(
                     "loginId",
                     "loginId.duplicate",
@@ -76,7 +80,7 @@ public class UserService {
                     "length.exceeded",
                     "닉네임이 10자가 넘습니다."
             );
-        } else if (userRepository.existsByNickname(request.getNickname())) {
+        } else if (userMapper.existsByNickname(request.getNickname())) {
             bindingResult.rejectValue(
                     "nickname",
                     "nickname.duplicate",
@@ -88,15 +92,15 @@ public class UserService {
     }
 
     public void join(UserJoinRequest request) {
-        userRepository.save(request.toEntity(encoder.encode(request.getPassword())));
+        userMapper.insert(request.toEntity(encoder.encode(request.getPassword())));
     }
 
     public User myInfo(String loginId) {
-        return userRepository.findByLoginId(loginId).get();
+        return userMapper.findByLoginId(loginId).get();
     }
 
     public BindingResult editValid(UserDto dto, BindingResult bindingResult, String loginId) {
-        User longinUser = userRepository.findByLoginId(loginId).get();
+        User longinUser = userMapper.findByLoginId(loginId).get();
 
         if (dto.getNowPassword().isEmpty()) {
             bindingResult.addError(new FieldError("dto","nowPassword","현재 비밀번호가 비어 있습니다"));
@@ -112,7 +116,7 @@ public class UserService {
             bindingResult.addError(new FieldError("dto", "nickname", "닉네임이 비어있습니다."));
         } else if (dto.getNickname().length() > 10) {
             bindingResult.addError(new FieldError("dto", "nickname", "닉네임이 10자가 넘습니다."));
-        } else if (!dto.getNickname().equals(longinUser.getNickname()) && userRepository.existsByNickname(dto.getNickname())) {
+        } else if (!dto.getNickname().equals(longinUser.getNickname()) && userMapper.existsByNickname(dto.getNickname())) {
             bindingResult.addError(new FieldError("dto", "nickname", "닉네임이 중복됩니다."));
         }
 
@@ -121,32 +125,33 @@ public class UserService {
 
     @Transactional
     public void edit(UserDto dto, String loginId) {
-        User loginUser = userRepository.findByLoginId(loginId).get();
+        User loginUser = userMapper.findByLoginId(loginId).get();
 
         if (dto.getNewPassword().equals("")) {
-            loginUser.edit(loginUser.getPassword(), dto.getNickname());
+            userMapper.updateProfile(loginUser.getId(), loginUser.getPassword(), loginUser.getNickname());
         } else {
-            loginUser.edit(encoder.encode(dto.getNewPassword()), dto.getNickname());
+            userMapper.updateProfile(loginUser.getId(), encoder.encode(dto.getNewPassword()), dto.getNickname());
         }
     }
 
 
     @Transactional
     public Boolean delete(String loginId, String nowPassword) {
-        User loginuser = userRepository.findByLoginId(loginId).get();
+        User loginuser = userMapper.findByLoginId(loginId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
 
         if(encoder.matches(nowPassword, loginuser.getPassword())) {
-            List<Like> likes = likeRepository.findAllByUser_LoginId(loginId);
-            for (Like like : likes) {
-                like.getBoard().likeChange(like.getBoard().getLikeCnt() - 1);
-            }
+            //게시글 카운트 깎기
+            boardMapper.decreaseLikeCountByUser(loginId);
+            boardMapper.decreaseCommentCountByUser(loginId);
 
-            List<Comment> comments = commentRepository.findAllByUser_LoginId(loginId);
-            for (Comment comment: comments) {
-                comment.getBoard().commentChange(comment.getBoard().getCommentCnt() - 1);
-            }
+            //실제 댓글 데이터 지우기
+            // commentMapper.deleteByLoginId(loginId);
 
-            userRepository.delete(loginuser);
+            //실제 좋아요 데이터 지우기
+            // likeMapper.deleteByLoginId(loginId);
+
+            userMapper.updateStatus(loginuser.getId(), UserStatus.DELETED);
             return true;
         } else {
             return false;
@@ -155,24 +160,40 @@ public class UserService {
 
 
     public Page<User> findAllByNickName(String keyword, PageRequest pageRequest) {
-        return userRepository.findAllByNicknameContains(keyword, pageRequest);
+        int page = pageRequest.getPageNumber();
+        int size = pageRequest.getPageSize();
+
+        int offset = page*size;
+
+        List<User> users = userMapper.findAllByNicknameContains(keyword, UserRole.ADMIN, offset, size);
+
+        long total = userMapper.countAllByNicknameContains(keyword);
+
+        return new PageImpl<>(users, pageRequest, total);
     }
 
     @Transactional
     public void changeRole(Long userId) {
-        User user = userRepository.findById(userId).get();
-        user.changeRole();
+        User user = userMapper.findById(userId).get();
+
+        UserRole nextRole = user.changeRole();
+
+        userMapper.updateRole(user.getId(), nextRole);
+
     }
 
     public UserCntDto getUserCnt() {
         return UserCntDto.builder()
-                .totalUserCnt(userRepository.count())
-                .totalAdminCnt(userRepository.countAllByUserRole(UserRole.ADMIN))
-                .totalBronzeCnt(userRepository.countAllByUserRole(UserRole.BRONZE))
-                .totalSilverCnt(userRepository.countAllByUserRole(UserRole.SILVER))
-                .totalGoldCnt(userRepository.countAllByUserRole(UserRole.GOLD))
-                .totalBlacklistCnt(userRepository.countAllByUserRole(UserRole.BLACKLIST))
+                .totalUserCnt(userMapper.countActive())
+                .totalAdminCnt(userMapper.countAllByUserRole(UserRole.ADMIN))
+                .totalBronzeCnt(userMapper.countAllByUserRole(UserRole.BRONZE))
+                .totalSilverCnt(userMapper.countAllByUserRole(UserRole.SILVER))
+                .totalGoldCnt(userMapper.countAllByUserRole(UserRole.GOLD))
+                .totalBlacklistCnt(userMapper.countAllByUserRole(UserRole.BLACKLIST))
                 .build();
     }
 
+    public boolean checkLoginIdDuplicate(String loginId) {
+        return userMapper.countByLoginId(loginId) > 0;
+    }
 }

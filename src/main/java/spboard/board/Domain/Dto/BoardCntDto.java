@@ -1,4 +1,4 @@
-package spboard.board.Dto;
+package spboard.board.Domain.Dto;
 
 import lombok.Builder;
 import lombok.Data;

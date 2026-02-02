@@ -84,7 +84,41 @@ DB 제약 조건으로도 데이터 무결성을 보장하도록 설계했습니
 
 - 좋아요 기능에 (user_id, board_id) 유니크 제약 적용
 - 로직 검증 + DB 제약의 이중 안전장치 구조
-- 
+
+### MyBatis (Refactored)
+- COUNT + LIST 쿼리 분리로 페이징 처리
+- 동적 검색 조건은 `<if> / <choose>`로 구현
+- 정렬 컬럼은 서버 화이트리스트 방식으로 검증
+
+[List 쿼리예시]
+```xml
+    <select id="findPageByCategoryExcludeRole" resultMap="BoardResultMap">
+        SELECT
+            b.id, b.title, b.body, b.category, b.like_cnt, b.comment_cnt, b.created_at, b.last_modified_at,
+            u.id AS user_id,
+            u.login_id AS login_id,
+            u.nickname AS nickname
+        FROM todo.`board` b
+        JOIN todo.`user` u ON u.id = b.user_id
+        WHERE b.category = #{category}
+            AND u.user_role != #{excludeRole}
+            AND u.status = 'ACTIVE'
+        <if test="searchType != null and keyword != null and keyword != ''">
+            <choose>
+                <when test="searchType == 'title'">
+                    AND b.title LIKE CONCAT('%', #{keyword}, '%')
+                </when>
+                <when test="searchType == 'nickname'">
+                    AND u.nickname LIKE CONCAT('%', #{keyword}, '%')
+                </when>
+            </choose>
+        </if>
+
+        ORDER BY ${orderBy} DESC
+
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+```
 ---
 
 ## Key Features

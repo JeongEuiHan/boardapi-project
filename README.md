@@ -4,7 +4,7 @@ Spring Boot 기반 REST API 게시판 프로젝트입니다.
 단순 기능 구현이 아니라 **서버가 클라이언트 요청을 끝까지 책임지는 구조**를 직접 설계하고 구현하는 것을 목표로 개발했습니다.
 
 > **기술 스택별 브랜치 안내**
-> - **[JPA 버전 (Current Main)](https://github.com/.../tree/main)**: 표준 JPA 및 엔티티 중심 설계
+> - **[JPA 버전 (Current Main)](https://github.com/JeongEuiHan/boardapi-project/tree/main)**: 표준 JPA 및 엔티티 중심 설계
 > - **[MyBatis & MySQL 버전 (Refactored)](https://github.com/.../tree/mybatis-version)**: SQL 중심 설계 및 MySQL 버전
 
 ---

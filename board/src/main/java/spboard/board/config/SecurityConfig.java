@@ -66,6 +66,12 @@ public class SecurityConfig {
                         // 관리자
                         .requestMatchers("/api/users/admin/**").hasAuthority("ADMIN")
 
+                        // swagger
+                        .requestMatchers(
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**"
+                        ).permitAll()
                         // 나머지
                         .anyRequest().authenticated()
                 )

@@ -213,11 +213,12 @@ class BoardServiceTest {
         when(board.getUser()).thenReturn(owner);
         when(owner.getLoginId()).thenReturn("realOwner");
 
-        // when & then
+        // 작성자와 로그인 사용자가 다를 때 예외 발생 검증
         assertThatThrownBy(() -> boardService.editBoard(boardId, category, request, loginId, newImage))
                 .isInstanceOf(SecurityException.class)
                 .hasMessageContaining("수정 권한");
 
+        // 보안 사고 방지: 수정 로직이 호출되지 않았음을 보장
         verify(board, never()).update(any());
         verify(uploadImageService, never()).saveImage(any(), any());
     }
@@ -261,5 +262,9 @@ class BoardServiceTest {
         verify(board).setUploadImage(savedImage);
         verify(board).update(request);
     }
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 73f0b7e (커밋)
 }

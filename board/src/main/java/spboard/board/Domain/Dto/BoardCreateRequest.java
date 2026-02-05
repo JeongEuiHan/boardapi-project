@@ -1,6 +1,7 @@
 package spboard.board.Domain.Dto;
 
 import lombok.Data;
+import lombok.Setter;
 import org.springframework.web.multipart.MultipartFile;
 import spboard.board.Domain.entity.Board;
 import spboard.board.Domain.enum_class.BoardCategory;

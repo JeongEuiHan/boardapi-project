@@ -262,9 +262,4 @@ class BoardServiceTest {
         verify(board).setUploadImage(savedImage);
         verify(board).update(request);
     }
-<<<<<<< HEAD
-    
-=======
-
->>>>>>> 73f0b7e (커밋)
 }

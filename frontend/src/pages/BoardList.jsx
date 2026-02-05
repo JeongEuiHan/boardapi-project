@@ -43,13 +43,13 @@ export default function BoardList() {
       searchType: next.searchType,
       keyword: next.keyword,
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    //
   }, [category]);
 
   // query 또는 category가 바뀔 때만 목록 조회
   useEffect(() => {
     fetchBoards();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    //
   }, [query, category]);
 
   // REST 표준 sort 파라미터로 변환

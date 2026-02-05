@@ -417,7 +417,7 @@ export default function BoardDetail() {
             const isCommentOwner = !!(me?.loginId && c.userLoginId === me.loginId);
 
             const canDelete = isAdmin || isCommentOwner;
-            const canEdit = isCommentOwner; // ✅ 작성자만 수정. 관리자도 수정하게 하려면: isAdmin || isCommentOwner
+            const canEdit = isCommentOwner; // 작성자만 수정. 관리자도 수정하게 하려면: isAdmin || isCommentOwner
 
             const isEditing = editingCommentId === c.id;
 

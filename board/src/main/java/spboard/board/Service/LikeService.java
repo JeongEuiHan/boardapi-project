@@ -20,9 +20,15 @@ public class LikeService {
 
     @Transactional
     public void addLike(String loginId, Long boardId) {
-        Board board = boardRepository.findById(boardId).get();
-        User loginUser = userRepository.findByLoginId(loginId).get();
+        Board board = boardRepository.findByIdWithLock(boardId)
+                .orElseThrow(() -> new IllegalArgumentException("게시글 없음"));
+        User loginUser = userRepository.findByLoginId(loginId)
+                .orElseThrow(() -> new IllegalArgumentException("유저 없음"));
         User boardUser = board.getUser();
+
+        if (likeRepository.existsByUser_LoginIdAndBoardId(loginId, boardId)) {
+            throw new IllegalStateException("이미 처리된 좋아요입니다.");
+        }
 
         // 자신이 누른 좋아요가 아니라면
         if (!boardUser.equals(loginUser)) {
@@ -38,9 +44,15 @@ public class LikeService {
 
     @Transactional
     public void deleteLike(String loginId, Long boardId) {
-        Board board = boardRepository.findById(boardId).get();
-        User loginUser = userRepository.findByLoginId(loginId).get();
+        Board board = boardRepository.findByIdWithLock(boardId)
+                .orElseThrow(() -> new IllegalArgumentException("게시글 없음"));
+        User loginUser = userRepository.findByLoginId(loginId)
+                .orElseThrow(() -> new IllegalArgumentException("유저 없음"));
         User boardUser = board.getUser();
+
+        if (!likeRepository.existsByUser_LoginIdAndBoardId(loginId, boardId)) {
+            throw new IllegalStateException("이미 없어진 좋아요입니다.");
+        }
 
         // 자신이 누른 좋아요가 아니라면
         if(!boardUser.equals(loginUser)) {

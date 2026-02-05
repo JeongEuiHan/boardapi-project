@@ -1,9 +1,15 @@
 package spboard.board.Repository;
 
+import jakarta.persistence.LockModeType;
+import jakarta.persistence.QueryHint;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.stereotype.Repository;
 import spboard.board.Domain.Dto.BoardDto;
 import spboard.board.Domain.entity.Board;
@@ -11,6 +17,7 @@ import spboard.board.Domain.enum_class.BoardCategory;
 import spboard.board.Domain.enum_class.UserRole;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface BoardRepository extends JpaRepository<Board, Long> {
@@ -31,4 +38,9 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
 
     Page<Board> findAllByCategoryAndUserNicknameContains(
             BoardCategory category, String nickname, Pageable pageable);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @QueryHints({@QueryHint(name = "javax.persistence.lock.timeout", value = "3000")}) // 3초 대기
+    @Query("select b from Board b where b.id = :id")
+    Optional<Board> findByIdWithLock(@Param("id") Long id);
 }

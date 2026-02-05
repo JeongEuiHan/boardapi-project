@@ -19,7 +19,7 @@ import MyPage from "./pages/MyPage";
 import AdminUser from "./pages/AdminUser";
 
 function App() {
-  // ✅ 앱 시작 시 로그인 상태 확인
+  // 앱 시작 시 로그인 상태 확인
   useEffect(() => {
     const checkLogin = async () => {
       try {
@@ -36,7 +36,7 @@ function App() {
 
   return (
     <Routes>
-      {/* ✅ 레이아웃(헤더) 적용 구간 */}
+      {/* 레이아웃(헤더) 적용 구간 */}
       <Route element={<MainLayout />}>
         {/* 홈 */}
         <Route path="/" element={<Home />} />
@@ -49,16 +49,16 @@ function App() {
         <Route path="/edit" element={<Edit />} />
         <Route path="/delete" element={<DeleteAccount />} />
 
-      {/* ✅ /mypage로 오면 기본 탭으로 리다이렉트 */}
+      {/* /mypage로 오면 기본 탭으로 리다이렉트 */}
         <Route path="/mypage" element={<Navigate to="/mypage/board" replace />} />
-      {/* ✅ 실제 마이페이지 */}
+      {/* 실제 마이페이지 */}
         <Route path="/mypage/:category" element={<MyPage />} />
 
         {/* 관리자 */}
         <Route path="/admin/user" element={<AdminUser />} />
       </Route>
 
-      {/* ✅ 레이아웃(헤더) 없이 쓰고 싶은 페이지들 */}
+      {/* 레이아웃(헤더) 없이 쓰고 싶은 페이지들 */}
       <Route path="/join" element={<Join />} />
       <Route path="/login" element={<Login />} />
       <Route path="/logout" element={<Logout />} />

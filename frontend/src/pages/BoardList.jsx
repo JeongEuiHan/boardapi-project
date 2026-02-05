@@ -7,7 +7,7 @@ export default function BoardList() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // ✅ URL → state 초기값 (UI는 1-base 유지)
+  // URL → state 초기값 (UI는 1-base 유지)
   const initialSearch = useMemo(() => {
     const page = Number(searchParams.get("page")) || 1; // 1-base (UI)
     return {
@@ -32,7 +32,7 @@ export default function BoardList() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // ✅ category 바뀌면 page=1로 초기화 + URL도 초기화
+  // category 바뀌면 page=1로 초기화 + URL도 초기화
   useEffect(() => {
     const next = { ...initialSearch, page: 1, keyword: "" };
     setForm(next);
@@ -46,13 +46,13 @@ export default function BoardList() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [category]);
 
-  // ✅ query 또는 category가 바뀔 때만 목록 조회
+  // query 또는 category가 바뀔 때만 목록 조회
   useEffect(() => {
     fetchBoards();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, category]);
 
-  // ✅ REST 표준 sort 파라미터로 변환
+  // REST 표준 sort 파라미터로 변환
   const toSortParam = (sortType) => {
     switch (sortType) {
       case "like":
@@ -241,7 +241,7 @@ export default function BoardList() {
                   </tr>
                 ) : (
                   boards.map((b) => {
-                    const isNotice = !!b.notice; // ✅ 백엔드에서 notice 내려준다고 가정
+                    const isNotice = !!b.notice; // 백엔드에서 notice 내려준다고 가정
 
                     return (
                       <tr
@@ -255,7 +255,7 @@ export default function BoardList() {
                         <td>{b.userNickname}</td>
 
                         <td style={{ textAlign: "left" }}>
-                          {/* ✅ 공지 뱃지 */}
+                          {/* 공지 뱃지 */}
                           {isNotice && (
                             <span
                               style={{

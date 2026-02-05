@@ -20,7 +20,7 @@ export default function AdminUser() {
 
   const isAdmin = useMemo(() => me?.userRole === "ADMIN", [me]);
 
-  // ✅ 로그인(토큰) 확인 + 내 정보 가져오기
+  // 로그인(토큰) 확인 + 내 정보 가져오기
   useEffect(() => {
     api
       .get("/api/users/me")
@@ -34,7 +34,7 @@ export default function AdminUser() {
       });
   }, [navigate]);
 
-  // ✅ 유저 목록 조회 (GET /api/users/admin)
+  // 유저 목록 조회 (GET /api/users/admin)
   useEffect(() => {
     setLoading(true);
     setSearchParams({ page: String(page), keyword });
@@ -42,12 +42,12 @@ export default function AdminUser() {
     api
       .get("/api/users/admin", {
         params: {
-          page, // ✅ 서버가 page-1 처리하면 1-base 그대로 보냄
+          page, // 서버가 page-1 처리하면 1-base 그대로 보냄
           keyword: keyword || "",
         },
       })
       .then((res) => {
-        // ✅ 백엔드가 Page 자체를 리턴하는 형태: { content, totalPages, number, ... }
+        // 백엔드가 Page 자체를 리턴하는 형태: { content, totalPages, number, ... }
         setUsers(res.data.content || []);
         setPageInfo(res.data || {});
       })
@@ -76,7 +76,7 @@ export default function AdminUser() {
     setPage(1);
   };
 
-  // ✅ 등급 변경 (PUT /api/users/admin/{userId}/role)
+  // 등급 변경 (PUT /api/users/admin/{userId}/role)
 const toggleRole = async (userId) => {
   if (!me) {
     alert("로그인 정보 로딩중...");
@@ -110,7 +110,7 @@ const toggleRole = async (userId) => {
   }
 };
 
-  // ✅ 페이징(5개 묶음)
+  // 페이징(5개 묶음)
   const pagination = useMemo(() => {
     const totalPages = pageInfo.totalPages || 0;
     const nowPage = (pageInfo.number ?? page - 1) + 1; // pageInfo.number는 0-base

@@ -12,7 +12,7 @@ export default function MyPage() {
   const [boards, setBoards] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // ✅ UI filter (client-side)
+  // UI filter (client-side)
   const [filter, setFilter] = useState("");
 
   const normalizeBoards = useMemo(() => {

@@ -15,7 +15,7 @@ export default function Edit() {
   const [errors, setErrors] = useState({}); // { field: message }
   const [loading, setLoading] = useState(false);
 
-  // ✅ 내 정보 불러와서 nickname 채우기
+  // 내 정보 불러와서 nickname 채우기
   useEffect(() => {
     api
       .get("/api/users/me")
@@ -42,7 +42,7 @@ export default function Edit() {
     }));
   };
 
-  // ✅ 백엔드가 getAllErrors() (배열)로 내려주는 경우도 대응
+  // 백엔드가 getAllErrors() (배열)로 내려주는 경우도 대응
   const normalizeErrors = (data) => {
     // 1) 이미 {field: message} 형태면 그대로
     if (data && !Array.isArray(data) && typeof data === "object") return data;

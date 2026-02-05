@@ -19,10 +19,10 @@ export default function MainLayout() {
 
   return (
     <>
-      {/* ✅ 공통 Header */}
+      {/* 공통 Header */}
       <Header pageName={pageName} />
 
-      {/* ✅ 페이지 내용 */}
+      {/* 페이지 내용 */}
       <div className="container">
         <Outlet />
       </div>

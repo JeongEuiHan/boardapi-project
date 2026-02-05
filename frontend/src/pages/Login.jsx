@@ -24,7 +24,7 @@ export default function Login() {
 
       localStorage.setItem("accessToken", token);
 
-      // ✅ 토큰이 실제로 붙는지 확인(선택이지만 디버깅에 좋음)
+      // 토큰이 실제로 붙는지 확인(선택이지만 디버깅에 좋음)
       await api.get("/api/users/me");
 
       navigate("/");

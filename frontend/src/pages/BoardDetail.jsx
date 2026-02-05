@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../api/axios";
 
-const BACKEND_BASE = "http://localhost:8084"; // ✅ 너 백엔드 포트에 맞춰
+const BACKEND_BASE = process.env.REACT_APP_API_URL;
 
 function formatDate(str) {
   return str ?? "";
@@ -24,7 +24,7 @@ export default function BoardDetail() {
   const [editMode, setEditMode] = useState(false);
   const [edit, setEdit] = useState({ title: "", body: "", newImage: null });
 
-  // ✅ 댓글 수정 UI state
+  // 댓글 수정 UI state
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editingBody, setEditingBody] = useState("");
 
@@ -36,7 +36,7 @@ export default function BoardDetail() {
   }, [board, me]);
   const canManage = isAdmin || isOwner;
 
-  // ✅ 이미지 URL 만들기 (방법 A)
+  // 이미지 URL 만들기
   const imageUrl = useMemo(() => {
     const img = board?.uploadImage;
     if (!img) return null;
@@ -111,7 +111,7 @@ export default function BoardDetail() {
         setLoading(false);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    //
   }, [category, boardId]);
 
   const toggleLike = async () => {
@@ -167,7 +167,7 @@ export default function BoardDetail() {
     }
   };
 
-  // ✅ 댓글 수정 시작/취소/저장
+  // 댓글 수정 시작/취소/저장
   const startCommentEdit = (c) => {
     setEditingCommentId(c.id);
     setEditingBody(c.body ?? "");

@@ -27,7 +27,7 @@ export default function Join() {
 
     try {
       await axios.post(
-        "http://localhost:8084/api/users/join",
+         `${BACKEND_BASE}/api/users/join`,
         form,
         { withCredentials: true }
       );
@@ -35,7 +35,7 @@ export default function Join() {
       alert("회원가입에 성공했습니다!");
       navigate("/login");
     } catch (err) {
-      // 🔥 Validation 에러 처리
+      // Validation 에러 처리
       if (err.response && err.response.status === 400) {
         setErrors(err.response.data); // { field: message }
       } else {

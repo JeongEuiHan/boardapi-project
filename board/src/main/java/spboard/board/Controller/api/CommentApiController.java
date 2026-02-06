@@ -26,7 +26,7 @@ public class CommentApiController {
      * 댓글 작성
      */
     @PostMapping("/{boardId}")
-    private ResponseEntity<?> addComments(
+    public ResponseEntity<?> addComments(
             @PathVariable Long boardId,
             @RequestBody CommentCreateRequest request,
             Authentication auth) {

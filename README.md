@@ -1,5 +1,8 @@
 # Spring Boot REST API 게시판 프로젝트
 
+> **배포 주소:** [http://54.180.108.56](http://54.180.108.56)  
+> **테스트 계정:** `aaa` / `123` (또는 회원가입 가능)
+
 Spring Boot 기반 REST API 게시판 프로젝트입니다.
 클라이언트 요청을 신뢰하지 않고,
 서버가 요청을 끝까지 책임지는 구조를 목표로 설계·구현했습니다.
@@ -215,10 +218,10 @@ boardapi/
 
 ### 3. 좋아요 중복 처리 문제
 
-#### 문제 상황
+**문제 상황**
 - 동일 사용자의 중복 좋아요 요청으로 카운트 증가 가능
 
-#### 해결
+**해결**
 - Service 계층에서 좋아요 존재 여부 검증
 - DB 레벨에서 (user_id, board_id) 유니크 제약 적용
 
@@ -231,6 +234,15 @@ likeRepository.existsByUser_LoginIdAndBoardId(loginId, boardId);
 **결과**
 - 로직 + DB 제약의 이중 안전장치 구조 확보
 - 동시 요청 상황에서도 데이터 무결성 유지
+
+### 4. 배포 환경(MariaDB)에서의 SQL 문법 호환성 문제
+
+**문제 상황**
+- 로컬(H2/MySQL)에서는 정상 작동하던 '좋아요' 기능이 배포 환경(AWS EC2 + MariaDB)에서 `500 Internal Server Error`를 발생시킴.
+- 로그 확인 결과, JPA에서 생성한 `FOR UPDATE OF` 구문을 MariaDB가 인식하지 못해 `SQLSyntaxErrorException` 발생.
+
+**해결**
+- `application.yml`에 `database-platform`을 `org.hibernate.dialect.MariaDBDialect`로 설정하여 Dialect를 변경함.
 
 ---
 

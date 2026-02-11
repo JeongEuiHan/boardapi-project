@@ -179,6 +179,7 @@ boardapi/
 ## Troubleshooting (핵심 문제 해결)
 
 ### JPA N+1 문제 해결
+
 **문제 상황**
 댓글 조회 후 DTO 변환 과정에서 연관 엔티티 접근으로 인해 N+1 문제가 발생했습니다.
 
@@ -188,7 +189,6 @@ boardapi/
 public class Comment {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
     private User user;
 
 }
@@ -198,11 +198,12 @@ public class Comment {
 public static CommentResponseDto from(Comment comment) {
     return CommentResponseDto.builder()
             .id(comment.getId())
-            .content(comment.getContent())
-            .userLoginId(comment.getUser().getLoginId()) // LAZY 접근
+            .body(comment.getBody())
             .createdAt(comment.getCreatedAt())
+            .userLoginId(comment.getUser().getLoginId())
+            .userNickname(comment.getUser() != null ? comment.getUser().getNickname() : null)
             .build();
-}
+    }
 ```
 
 **기존 Repository**

@@ -178,64 +178,94 @@ boardapi/
 
 ## Troubleshooting (핵심 문제 해결)
 
-### 1. 인증 실패(401)와 권한 부족(403)이 구분되지 않던 문제
-
+### JPA N+1 문제 해결
 **문제 상황**
-- 인증되지 않은 요청과 권한이 없는 요청이 동일한 에러로 처리
-- 클라이언트에서 원인 파악이 어려움
+댓글 조회 후 DTO 변환 과정에서 연관 엔티티 접근으로 인해 N+1 문제가 발생했습니다.
 
-**해결**
-- JWT 인증 필터 적용
-- 인증 실패(401)와 권한 부족(403) 응답 분리
+**Entity 구조**
+```java
+@Entity
+public class Comment {
 
-**결과**
-- 인증 여부와 권한 상태를 명확히 구분 가능
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
 
-- Authorization 헤더 없이 요청 → 401 Unauthorized  
-![Authorization 없음](docs/screenshots/auth-before.PNG)
+}
+```
+**N+1 DTO 변환**
+```java
+public static CommentResponseDto from(Comment comment) {
+    return CommentResponseDto.builder()
+            .id(comment.getId())
+            .content(comment.getContent())
+            .userLoginId(comment.getUser().getLoginId()) // LAZY 접근
+            .createdAt(comment.getCreatedAt())
+            .build();
+}
+```
 
-- Authorization 헤더(JWT) 포함 요청 → 200 OK 
-![Authorization 포함](docs/screenshots/auth-after.PNG)
+**기존 Repository**
+```java
+List<Comment> findAllByBoardId(Long boardId);
+```
 
 ---
 
-### 2. 게시판 카테고리 권한 우회 문제
+## 실행 로그 (Before)
+```sql
+select * from comment where board_id = 54;
 
-**문제 상황**
-- 프론트엔드 제어 또는 Controller 분기로 권한 처리
-- URL 직접 호출로 권한 우회 가능
-
-**해결**
-- 모든 게시판 접근 정책을 **Service 계층에서 중앙 관리**
-- 카테고리 + 사용자 등급 기준으로 서버에서 최종 검증
-
-**검증 결과**
-
-- SILVER 사용자가 GOLD 게시판 작성 시 → **403 Forbidden**
-- 클라이언트 조작과 무관하게 서버에서 정책 강제
-  
-![GOLD 게시판 권한 차단](docs/screenshots/forbidden-gold.PNG)
-
-### 3. 좋아요 중복 처리 문제
-
-**문제 상황**
-- 동일 사용자의 중복 좋아요 요청으로 카운트 증가 가능
-
-**해결**
-- Service 계층에서 좋아요 존재 여부 검증
-- DB 레벨에서 (user_id, board_id) 유니크 제약 적용
-
-```java
-likeRepository.existsByUser_LoginIdAndBoardId(loginId, boardId);
+select * from user where id = 3;
+select * from user where id = 7;
+select * from user where id = 2;
+select * from user where id = 5;
 ```
-이를 통해 로직 검증 + DB 제약이라는
-이중 안전장치 구조를 적용했습니다.
+댓글 수만큼 user 조회 발생 → 1 + N 쿼리
 
-**결과**
-- 로직 + DB 제약의 이중 안전장치 구조 확보
-- 동시 요청 상황에서도 데이터 무결성 유지
+---
 
-### 4. 배포 환경(MariaDB)에서의 SQL 문법 호환성 문제
+### 해결 방법 (Fetch Join 적용)
+## Repository 수정
+```java
+@Query("""
+    select c from Comment c
+    join fetch c.user
+    where c.board.id = :boardId
+    order by c.createdAt desc
+""")
+List<Comment> findAllByBoardIdWithUser(@Param("boardId") Long boardId);
+```
+
+---
+
+## 실행 로그 (After)
+```
+select c.*, u.*
+from comment c
+join user u on u.id = c.user_id
+where c.board_id = 54
+order by c.created_at desc;
+```
+- 댓글 + 작성자 단일 쿼리 조회
+- 추가 SELECT 없음
+- N+1 문제 해결 완료
+
+---
+
+## 개선 결과
+
+| 항목 | 개선 전 | 개선 후 |
+|------|---------|---------|
+| 댓글 조회 쿼리 수 | 1 + N | 1 |
+| 성능 특성 | 댓글 수에 비례 | 일정 유지 |
+| DB 부하 | 증가 | 감소 |
+
+---
+## 한 줄 요약
+LAZY 연관관계 접근으로 발생한 N+1 문제를 Fetch Join으로 해결하고, Hibernate SQL 로그로 검증했습니다.
+
+### 2. 배포 환경(MariaDB)에서의 SQL 문법 호환성 문제
 
 **문제 상황**
 - 로컬(H2/MySQL)에서는 정상 작동하던 '좋아요' 기능이 배포 환경(AWS EC2 + MariaDB)에서 `500 Internal Server Error`를 발생시킴.

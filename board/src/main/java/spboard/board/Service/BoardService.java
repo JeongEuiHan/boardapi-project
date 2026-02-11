@@ -55,18 +55,18 @@ public class BoardService {
 
         // 검색어 없음
         if (searchType == null || keyword == null || keyword.isBlank()) {
-            return boardRepository.findAllByCategory(category, sortedPageable);
+            return boardRepository.findByCategoryWithUser(category, sortedPageable);
         }
 
         // 제목 검색
         if (searchType == BoardSearchType.TITLE) {
-            return boardRepository.findAllByCategoryAndTitleContains(
+            return boardRepository.findByCategoryAndTitleContainsWithUser(
                     category, keyword, sortedPageable
             );
         }
 
         // 작성자 검색
-        return boardRepository.findAllByCategoryAndUserNicknameContains(
+        return boardRepository.findByCategoryAndUserNickNameContainsWithUser(
                 category, keyword, sortedPageable
         );
     }
@@ -75,7 +75,7 @@ public class BoardService {
 
         validateGoldReadPermission(category, loginId);
 
-        Optional<Board> optBoard = boardRepository.findById(boardId);
+        Optional<Board> optBoard = boardRepository.findByIdWithUser(boardId);
 
         // id에 해당하는 게시글이 없거나 카테고리가 일치하지 않으면 null return 대문자 소문자 무시
         if (optBoard.isEmpty() || optBoard.get().getCategory() != category){

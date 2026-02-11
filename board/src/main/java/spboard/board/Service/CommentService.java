@@ -33,8 +33,9 @@ public class CommentService {
         commentRepository.save(request.toEntity(board, user));
     }
 
+    @Transactional(readOnly = true)
     public List<CommentResponseDto> findAll(Long boardId) {
-        return commentRepository.findAllByBoardId(boardId).stream()
+        return commentRepository.findByBoardIdWithUser(boardId).stream()
                 .map(CommentResponseDto::from)
                 .toList();
     }

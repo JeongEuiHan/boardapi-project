@@ -43,4 +43,70 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
     @QueryHints({@QueryHint(name = "javax.persistence.lock.timeout", value = "3000")}) // 3초 대기
     @Query("select b from Board b where b.id = :id")
     Optional<Board> findByIdWithLock(@Param("id") Long id);
+
+
+    @Query(
+            value = """
+                    select b from Board b
+                    join fetch b.user
+                    where b.category = :category
+                    order by b.createdAt desc
+                    """,
+            countQuery = """
+                    select count(b) from Board b
+                    where b.category = :category
+                    """
+    )
+    Page<Board> findByCategoryWithUser(
+            @Param("category") BoardCategory category,
+            Pageable pageable
+    );
+
+    @Query(
+            value = """
+                    select b from Board b
+                    join fetch b.user
+                    where b.category = :category
+                    and b.title like %:keyword%
+                    order by b.notice desc, b.createdAt desc
+                    """,
+            countQuery = """
+                    select count(b) from Board b
+                    where b.category = :category
+                    and b.title like %:keyword%
+                    """
+    )
+    Page<Board> findByCategoryAndTitleContainsWithUser(
+            @Param("category") BoardCategory category,
+            @Param("keyword") String keyword,
+            Pageable pageable
+    );
+
+    @Query(
+            value = """
+                    select b from Board b
+                    join fetch b.user
+                    where b.category = :category
+                    and b.title like %:keyword%
+                    order by b.notice desc, b.createdAt desc
+                    """,
+            countQuery = """
+                    select count(b) from Board b
+                    join b.user u
+                    where b.category = :category
+                    and u.nickname like %:keyword%
+                    """
+    )
+    Page<Board> findByCategoryAndUserNickNameContainsWithUser(
+            @Param("category") BoardCategory category,
+            @Param("keyword") String keyword,
+            Pageable pageable
+    );
+
+    @Query("""
+            select b from Board b
+            join fetch b.user
+            where b.id = :boardId
+            """)
+    Optional<Board> findByIdWithUser(@Param("boardId") Long boardId);
 }

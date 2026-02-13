@@ -211,9 +211,7 @@ public static CommentResponseDto from(Comment comment) {
 List<Comment> findAllByBoardId(Long boardId);
 ```
 
----
-
-## 실행 로그 (Before)
+**실행 로그 (Before)**
 ```sql
 select * from comment where board_id = 54;
 
@@ -224,10 +222,9 @@ select * from user where id = 5;
 ```
 댓글 수만큼 user 조회 발생 → 1 + N 쿼리
 
----
+**해결 방법 (Fetch Join 적용)**
 
-### 해결 방법 (Fetch Join 적용)
-## Repository 수정
+**Repository 수정**
 ```java
 @Query("""
     select c from Comment c
@@ -238,9 +235,7 @@ select * from user where id = 5;
 List<Comment> findAllByBoardIdWithUser(@Param("boardId") Long boardId);
 ```
 
----
-
-## 실행 로그 (After)
+**실행 로그 (After)**
 ```
 select c.*, u.*
 from comment c
@@ -252,9 +247,7 @@ order by c.created_at desc;
 - 추가 SELECT 없음
 - N+1 문제 해결 완료
 
----
-
-## 개선 결과
+**개선 결과**
 
 | 항목 | 개선 전 | 개선 후 |
 |------|---------|---------|
@@ -262,9 +255,8 @@ order by c.created_at desc;
 | 성능 특성 | 댓글 수에 비례 | 일정 유지 |
 | DB 부하 | 증가 | 감소 |
 
----
-## 한 줄 요약
-LAZY 연관관계 접근으로 발생한 N+1 문제를 Fetch Join으로 해결하고, Hibernate SQL 로그로 검증했습니다.
+**한 줄 요약**
+- LAZY 연관관계 접근으로 발생한 N+1 문제를 Fetch Join으로 해결하고, Hibernate SQL 로그로 검증했습니다.
 
 ### 2. 배포 환경(MariaDB)에서의 SQL 문법 호환성 문제
 
